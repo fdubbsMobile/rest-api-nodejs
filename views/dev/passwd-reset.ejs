@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+    <head>
+        <% include ./head %>
+    </head>
+    <body class="<%= login ? 'logged_in' : 'logged_out' %>  env-production macintosh  page-profile mine">
+        <a href="#start-of-content" tabindex="1" class="accessibility-aid js-skip-to-content">Skip to content</a>
+        <div class="wrapper">
+            <% if (login) { %>
+            <% include ./logined-banner %>
+            <%  } else { %>
+            <% include ./banner %>
+            <% }  %>
+            <div class="site clearfix" role="main">
+                <div id="site-container" class="context-loader-container" data-pjax-container>
+                    <% if (error) { %>
+                    <div class="flash-messages container">
+                        <div class="flash flash-error"><span class="octicon octicon-x flash-close js-flash-close"></span><%= errMsg %></div>
+                    </div>
+                    <% } %>
+                    <div class="auth-form login-form">
+                        <form accept-charset="UTF-8" action="/password/reset/<%= token_id %>" method="post">
+                            <div class="auth-form-header">
+                                <h1>Change your password</h1>
+                            </div>
+                            <div class="auth-form-body">
+                                <label>Password</label>
+                                <input autofocus="autofocus" class="input-block" id="password" name="password" tabindex="1" type="password" value="" />
+                                <p class="hint">Must contain one lowercase letter, one number, and be at least 7 characters long</p>
+                                <label>Confirm password</label>
+                                <input class="input-block" id="password_confirmation" name="password_confirmation" tabindex="2" type="password" value="" />
+                                <input class="button" name="commit" tabindex="3" type="submit" value="Change password" />
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-backdrop"></div>
+            </div>
+        </div>
+        <!-- /.wrapper -->
+        <% include ./footer %>
+    </body>
+</html>

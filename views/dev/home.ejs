@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+
+<head>
+    <% include ./head %>
+</head>
+
+
+<body class="logged_in  env-production macintosh  page-profile mine">
+    <a href="#start-of-content" tabindex="1" class="accessibility-aid js-skip-to-content">Skip to content</a>
+    <div class="wrapper">
+
+        <% include ./logined-banner %>
+
+        <div class="site clearfix" role="main">
+                <div id="site-container" class="context-loader-container" data-pjax-container>
+                    <div class="container">
+                        <div class="columns profilecols js-username">
+                            <div class="column one-fourth vcard">
+                                <a href="/settings/profile" aria-label="Change your avatar" class="vcard-avatar tooltipped tooltipped-s"><img class="avatar" height="230" src="/avatars/<%= developer.profile.avatarImg%>" width="230" /></a>
+                                <h1 class="vcard-names">
+                                    <% if (developer.profile.fullName) { %>
+                                    <span class="vcard-fullname" itemprop="name"><%= developer.profile.fullName%></span>
+                                    <% } %>
+                                    <span class="vcard-username" itemprop="additionalName"><%= developer.name%></span>
+                                </h1>
+                                <ul class="vcard-details">
+                                    <% if (developer.profile.company) { %>
+                                    <li class="vcard-detail" itemprop="worksFor"><span class="octicon octicon-organization"></span><%= developer.profile.company%></li>
+                                    <% } %>
+                                    <% if (developer.profile.location) { %>
+                                    <li class="vcard-detail" itemprop="homeLocation"><span class="octicon octicon-location"></span><%= developer.profile.location%></li>
+                                    <% } %>
+                                    <% if (developer.email) { %>
+                                    <li class="vcard-detail"><span class="octicon octicon-mail"></span><a class="email" href="mailto:<%= developer.email%>"><%= developer.email%></a></li>
+                                    <% } %>
+                                    <% if (developer.profile.url) { %>
+                                    <li class="vcard-detail" itemprop="url"><span class="octicon octicon-link"></span><a href="<%= developer.profile.url%>" class="url" rel="nofollow me"><%= developer.profile.url%></a></li>
+                                    <% } %>
+                                    <% if (developer.joinDate) { %>
+                                    <li class="vcard-detail"><span class="octicon octicon-clock"></span><span class="join-label">Joined on </span><time class="join-date" datetime="<%= developer.joinDate%>" day="numeric" is="local-time" month="short" year="numeric"></time></li>
+                                    <% } %>
+                                </ul>
+
+                            </div>
+
+                            <div class="column three-fourths">
+                                <div class="boxed-group">
+                                    <a href="/settings/applications/new" class="minibutton boxed-group-action" data-pjax="true">Register new application</a>
+                                    <h3>Developer applications</h3>
+                                    <div class="boxed-group-inner">
+                                      <% if (applications.length) {%>
+                                        <p>These are clients / applications you have registered to use the REST APIs.</p>
+                                        <ul class="boxed-group-list">
+                                          <% for( var idx in applications) {%>
+                                          <li class="">
+                                            <span class="right oauth-application-users">
+                                              <strong>0</strong>
+                                              users
+                                            </span>
+                                            <a class="active" href="/settings/applications/<%= applications[idx].id %>" data-pjax><%= applications[idx].name %></a>
+                                            <a class="muted-link" href="/settings/applications/<%= applications[idx].id %>"><%= applications[idx].url %></a>
+                                          </li>
+                                          <% } %>
+                                        </ul>
+                                      <% } else {%>
+                                        <p>Do you want to build your own client / application to access data of <a href="http://bbs.fudan.edu.cn">Fudan BBS</a> by leveraging the REST APIs? <strong><a href="/settings/applications/new" data-pjax>Register an application</a></strong> to generate OAuth2 tokens.</p>
+                                      <% } %>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-backdrop"></div>
+            </div>
+
+    </div>
+    <!-- /.wrapper -->
+
+    <% include ./footer %>
+
+
+</body>
+
+</html>

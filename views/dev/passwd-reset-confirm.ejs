@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+    <head>
+        <% include ./head %>
+    </head>
+    <body class="<%= login ? 'logged_in' : 'logged_out' %>  env-production macintosh  page-profile mine">
+        <a href="#start-of-content" tabindex="1" class="accessibility-aid js-skip-to-content">Skip to content</a>
+        <div class="wrapper">
+            <% if (login) { %>
+            <% include ./logined-banner %>
+            <%  } else { %>
+            <% include ./banner %>
+            <% }  %>
+            <div class="site clearfix" role="main">
+                <div id="site-container" class="context-loader-container" data-pjax-container>
+                    <div class="auth-form">
+                        <div class="auth-form-header">
+                            <h1>Password reset confirmation sent!</h1>
+                        </div>
+                        <div class="auth-form-body">
+                            <p>
+                                We’ve sent you an email containing a link that will allow you to reset your password for the next 24 hours.
+                            </p>
+                            <p>
+                                Please check your spam folder if the email doesn’t appear within a few minutes.
+                            </p>
+                            <a href="/login" class="minibutton">
+                            <span class="octicon octicon-arrow-right"></span>
+                            Return to sign in
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-backdrop"></div>
+            </div>
+        </div>
+        <!-- /.wrapper -->
+        <% include ./footer %>
+    </body>
+</html>

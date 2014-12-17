@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+   <head>
+      <% include ./head %>
+   </head>
+
+   <body class="logged_out  env-production macintosh  homepage">
+      <a href="#start-of-content" tabindex="1" class="accessibility-aid js-skip-to-content">Skip to content</a>
+      <div class="wrapper">
+
+        <% include ./banner %>
+
+         <div class="site clearfix" role="main">
+            <div id="site-container" class="context-loader-container" data-pjax-container>
+               <div class="marketing-section-signup">
+                  <div class="container">
+                     <form accept-charset="UTF-8" action="/join" autocomplete="off" class="form-signup-home js-form-signup-home" method="post">
+
+                        <dl class="form">
+                           <dd>
+                              <input type="text" name="user[name]" class="textfield" placeholder="Pick a username"  autofocus>
+                           </dd>
+                        </dl>
+                        <dl class="form">
+                           <dd>
+                              <input type="text" name="user[email]" class="textfield js-email-notice-trigger" placeholder="Your email" >
+                           </dd>
+                        </dl>
+                        <dl class="form">
+                           <dd>
+                              <input type="password" name="user[password]" class="textfield" placeholder="Create a password" >
+                           </dd>
+                           <p class="text-muted">Use at least one lowercase letter, one numeral, and seven characters.</p>
+                        </dl>
+                        <input type="hidden" name="source_label" value="Homepage">
+                        <button class="button primary button-block" type="submit">Sign up for REST API</button>
+                        <p class="text-muted">
+                           By clicking "Sign up for REST API", you agree to our
+                           <a href="#" target="_blank">terms of service</a> and
+                           <a href="#" target="_blank">privacy policy</a>. <span class="js-email-notice">We will send you account related emails occasionally.</span>
+                        </p>
+                     </form>
+                     <h1 class="heading">So Qiuck. So Easy.</h1>
+                     <p class="subheading">Build your own apps for <a href="http://bbs.fudan.edu.cn">Fudan BBS</a> quickly and easily by using the REST APIs. Get started with the API documentation.</p>
+                     <a href="/" class="marketing-button">Browse API documentation</a>
+                  </div>
+                  <!-- /.container -->
+                  <div class="marketing-section-depth"></div>
+               </div>
+               <!-- /.jumbotron -->
+            </div>
+            <div class="modal-backdrop"></div>
+         </div>
+      </div>
+      <!-- /.wrapper -->
+
+      <% include ./footer %>
+
+   </body>
+</html>

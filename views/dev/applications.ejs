@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+    <head>
+        <% include ./head %>
+
+    </head>
+    <body class="logged_in  env-production macintosh  page-profile mine">
+        <a href="#start-of-content" tabindex="1" class="accessibility-aid js-skip-to-content">Skip to content</a>
+        <div class="wrapper">
+            <% include ./logined-banner %>
+            <div class="site clearfix" role="main">
+                <div id="site-container" class="context-loader-container" data-pjax-container>
+                    <div class="container">
+                        <div class="columns">
+                            <div class="column one-fourth menu-container" role="navigation">
+                                <ul class="menu accordion" data-pjax>
+                                    <li class="section">
+                                        <a href="/home" class="section-head">
+                                        <img height="20" src="/avatars/<%= developer.profile.avatarImg%>" width="20" />
+                                        <%= developer.name%>
+                                        </a>
+                                        <ul class="expanded section-nav">
+                                            <li>
+                                                <a href="/settings/profile" class="js-selected-navigation-item " data-selected-links="avatar_settings /settings/profile">Profile</a>
+                                            </li>
+                                            <li>
+                                                <a href="/settings/admin" class="js-selected-navigation-item " data-selected-links=" /settings/admin">Account settings</a>
+                                            </li>
+                                            <li>
+                                                <a href="/settings/applications" class="js-selected-navigation-item selected" data-selected-links="applications_settings /settings/applications">Applications</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="column three-fourths">
+                                <div class="boxed-group">
+                                    <a href="/settings/applications/new" class="minibutton boxed-group-action" data-pjax="true">Register new application</a>
+                                    <h3>Developer applications</h3>
+                                    <div class="boxed-group-inner">
+                                      <% if (applications.length) {%>
+                                        <p>These are clients / applications you have registered to use the REST APIs.</p>
+                                        <ul class="boxed-group-list">
+                                          <% for( var idx in applications) {%>
+                                          <li class="">
+                                            <span class="right oauth-application-users">
+                                              <strong>0</strong>
+                                              users
+                                            </span>
+                                            <a class="active" href="/settings/applications/<%= applications[idx].id %>" data-pjax><%= applications[idx].name %></a>
+                                            <a class="muted-link" href="/settings/applications/<%= applications[idx].id %>"><%= applications[idx].url %></a>
+                                          </li>
+                                          <% } %>
+                                        </ul>
+                                      <% } else {%>
+                                        <p>Do you want to build your own client / application to access data of <a href="http://bbs.fudan.edu.cn">Fudan BBS</a> by leveraging the REST APIs? <strong><a href="/settings/applications/new" data-pjax>Register an application</a></strong> to generate OAuth2 tokens.</p>
+                                      <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-backdrop"></div>
+            </div>
+        </div>
+        <!-- /.wrapper -->
+        <% include ./footer %>
+
+    </body>
+</html>

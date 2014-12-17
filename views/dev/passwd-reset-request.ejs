@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+    <head>
+      <% include ./head %>
+    </head>
+    <body class="<%= login ? 'logged_in' : 'logged_out' %>  env-production macintosh  page-profile mine">
+        <a href="#start-of-content" tabindex="1" class="accessibility-aid js-skip-to-content">Skip to content</a>
+        <div class="wrapper">
+          <% if (login) { %>
+              <% include ./logined-banner %>
+          <%  } else { %>
+              <% include ./banner %>
+          <% }  %>
+            <div class="site clearfix" role="main">
+                <div id="site-container" class="context-loader-container" data-pjax-container>
+                    <% if (error) { %>
+                    <div class="flash-messages container">
+                        <div class="flash flash-error"><span class="octicon octicon-x flash-close js-flash-close"></span><%= errMsg %></div>
+                    </div>
+                    <% } %>
+                    <div class="auth-form">
+                        <form accept-charset="UTF-8" action="/password/reset" id="forgot_password_form" method="post">
+                            <div class="auth-form-header">
+                                <h1>Forgot password</h1>
+                            </div>
+                            <div class="auth-form-body">
+                                <label for="email_field">Email</label>
+                                <input autofocus="autofocus" class="input-block" id="email_field" name="email" type="text" value="<%= login ? developer.email : email%>" />
+                                <input name="commit" type="submit" value="Submit" class="button">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-backdrop"></div>
+            </div>
+        </div>
+        <!-- /.wrapper -->
+        <% include ./footer %>
+    </body>
+</html>
