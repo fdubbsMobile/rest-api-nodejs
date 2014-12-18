@@ -1,6 +1,5 @@
 var fs = require('fs');
 var crypto = require('crypto');
-var Legicon = require('../utils/legicon-custom');
 
 
 var Developer = require('../mongodb/developers.js').Developer;
@@ -130,50 +129,5 @@ exports.remove = function (username, done) {
 };
 
 
-exports.create = function (user, done) {
 
-  var encryptPasswd = genEncryptPassword(user.password);
-  var avatarImg = genAvatar(user.name);
 
-  var developer = new Developer({
-  	name : user.name,
-  	email : user.email,
-  	password : encryptPasswd,
-  	profile : {
-  		avatarImg : avatarImg
-  	}
-  });
-
-  developer.save(function (err) {
-  	if (err) {
-  		done(err);
-  	} else {
-  		done(null);
-  	}
-  });
-};
-
-function genAvatar(username) {
-  var avatarImg = username +'_default.png';
-  var userAvatar = Legicon(username);
-  var stream = userAvatar.pngStream();
-  var out = fs.createWriteStream(__dirname + '/../public/avatars/' + avatarImg);
-
-  stream.on('data', function(chunk){
-  	out.write(chunk);
-  });
-
-  stream.on('end', function(){
-  	console.log('saved png');
-  });
-
-  return avatarImg;
-}
-
-function genEncryptPassword(password) {
-	var pem = fs.readFileSync(__dirname + '/../certs/server.pem');
-	var key = pem.toString('ascii');
-	var hmac = crypto.createHmac('sha1', key);
-	hmac.update(password);
-	return hmac.digest('hex');
-}
