@@ -1,6 +1,6 @@
 {
-  "name": "shinifyapi",
-  "version": "0.0.1",
+  "name": "api-shinify",
+  "version": "0.0.2",
   "main": "server.js",
   "author": {
     "name": "Xu Lvcai"

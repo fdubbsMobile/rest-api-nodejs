@@ -27,8 +27,7 @@ var server = oauth2orize.createServer();
  * which is bound to these values, and will be exchanged for an access token.
  */
 server.grant(oauth2orize.grant.code(function (client, redirectURI, user, ares, done) {
-  console.log("user ", user);
-    models.authorizationCodes.create(user.name, client.id, redirectURI, client.scope, function (err, authorizationCode) {
+    models.authorizationCodes.create(user.id, client.id, redirectURI, client.scope, function (err, authorizationCode) {
         if (err) {
             return done(err, null);
         }
@@ -45,7 +44,8 @@ server.grant(oauth2orize.grant.code(function (client, redirectURI, user, ares, d
  * which is bound to these values.
  */
 server.grant(oauth2orize.grant.token(function (client, user, ares, done) {
-    models.accessTokens.create(user.name, client.id, client.scope, function (err, accessToken) {
+console.log("grant.token : ", client);
+    models.accessTokens.create(user.id, client.id, client.scope, function (err, accessToken) {
         if (err) {
             return done(err, null);
         }
@@ -122,7 +122,7 @@ server.exchange(oauth2orize.exchange.password(function(client, username, passwor
             return done(null, null);
         }
 
-        models.accessTokens.create(user.name, client.id, scope, function (err, accessToken) {
+        models.accessTokens.create(user.id, client.id, scope, function (err, accessToken) {
             if (err) {
                 return done(err);
             }
@@ -130,7 +130,7 @@ server.exchange(oauth2orize.exchange.password(function(client, username, passwor
             //I mimic openid connect's offline scope to determine if we send
             //a refresh token or not
             if (scope && scope.indexOf("offline_access") === 0) {
-                models.refreshTokens.create(user.name, client.id, scope, function (err, refreshToken) {
+                models.refreshTokens.create(user.id, client.id, scope, function (err, refreshToken) {
                     if (err) {
                         return done(err);
                     }
@@ -153,7 +153,7 @@ server.exchange(oauth2orize.exchange.password(function(client, username, passwor
 server.exchange(oauth2orize.exchange.clientCredentials(function(client, scope, done) {
     var token = utils.uid(config.token.accessTokenLength);
     //Pass in a null for user id since there is no user when using this grant type
-    models.accessTokens.create(null, client.name, scope, function (err, accessToken) {
+    models.accessTokens.create(null, client.id, scope, function (err, accessToken) {
         if (err) {
             return done(err);
         }
