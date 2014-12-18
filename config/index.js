@@ -65,7 +65,7 @@ exports.db = {
  */
 exports.session = {
     type: "MongoStore",
-    maxAge: 3600000 * 24 * 7 * 52,
+    maxAge: 3600000 * 12,
     secret: function () {
         var pem = fs.readFileSync(__dirname + '/../certs/server.pem');
         return pem.toString('ascii');
