@@ -78,5 +78,5 @@ exports.env = {
 };
 
 exports.host = {
-    address : "https://shinify.herokuapp.com"
+    address : "https://shinifyapi.herokuapp.com"
 };

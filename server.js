@@ -1,5 +1,5 @@
 // load the packages as needed
-require('newrelic');
+//require('newrelic');
 
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -45,10 +45,6 @@ mongoosedb.connect(function(err) {
     console.log('Succsee to connect to mongodb!');
   }
 });
-
-//From time to time we need to clean up any expired tokens
-//in the database
-models.passwdresettokens.removeExpired();
 
 // Create our Express server
 var server = express();
@@ -98,15 +94,13 @@ server.use(passport.session());
 
 
 // Create our Express router
-var siteRouter = require('./routers/siteRouter').router;
 var oauth2Router = require('./routers/oauth2Router').router;
 var restApiRouter = require('./routers/restApiRouter').router;
 
 
 // Register all our routes
 server.use('/oauth2', oauth2Router);
-server.use('/api', restApiRouter);
-server.use('/', siteRouter);
+server.use('/', restApiRouter);
 
 
 // check if run on heroku
