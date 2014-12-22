@@ -95,12 +95,14 @@ server.use(passport.session());
 
 // Create our Express router
 var oauth2Router = require('./routers/oauth2Router').router;
-var restApiRouter = require('./routers/restApiRouter').router;
+var restApiRootRouter = require('./routers/restApiRootRouter').router;
+var restApiV1Router = require('./routers/restApiV1Router').router;
 
 
 // Register all our routes
 server.use('/oauth2', oauth2Router);
-server.use('/', restApiRouter);
+server.use('/v1', restApiV1Router);
+server.use('/', restApiRootRouter);
 
 
 // check if run on heroku

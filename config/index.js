@@ -80,3 +80,7 @@ exports.env = {
 exports.host = {
     address : "https://api-shinify.herokuapp.com"
 };
+
+exports.bbs = {
+    host : "http://bbs.fudan.edu.cn"
+};
