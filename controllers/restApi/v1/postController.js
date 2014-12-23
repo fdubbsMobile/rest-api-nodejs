@@ -1,16 +1,49 @@
-var needle = require('needle');
+var needle = require('../../../lib/needle');
 var config = require('../../../config/');
-var iconv = require('iconv').Iconv;
 //var xml2js = require('xml2js-expat');
 //var parser = new xml2js.Parser('UTF-8');
+
+var debugging   = !!process.env.DEBUG,
+    debug       = debugging ? console.log : function() { /* noop */ };
 
 var options = {
   decode : false,
   parse : true
 }
 
-function loadTopPosts (callback) {
+function constructPost(rawData) {
+	var title = rawData._;
+	var detail = rawData.$;
 
+	
+	var poster = {};
+	poster.name = detail.owner;
+
+	var post = {};
+	post.id = detail.gid;
+	post.title = title;
+	post.board = detail.board;
+	post.reply_count = detail.count;
+	post.poster = poster;
+
+	return post;
+}
+
+function loadTopPosts (callback) {
+	var url = config.bbs.host + "/bbs/top10";
+	needle.get(url, options, function (error, response, body) {
+		if (!error && response.statusCode == 200) {
+			var result = [];
+			var topPosts = body.bbstop10.top;
+			for (var key in topPosts) {
+				result.push(constructPost(topPosts[key]));
+			}
+
+			callback(null, result);
+		} else {
+			callback("internal error", null);
+		}
+	});
 }
 
 function loadPosts (loaded_by, board, organized_by, cursor, count, callback) {
@@ -23,23 +56,16 @@ function loadPostDetail (id, loaded_by, board, callback) {
 
 function loadReplies (id, loaded_by, board, cursor, count, callback) {
 
-}
+} 
 
 exports.getTopPosts = function (req, res) {
-	var url = config.bbs.host + "/bbs/top10";
-	needle.get(url, options, function (error, response, body) {
-		if (!error && response.statusCode == 200) {
-			console.log(JSON.stringify(response.body));
-			//res.header("Content-Type", "application/json; charset=gb18030");
-			/*res.set({
-				'Content-Type': 'application/json; charset=gb18030',
-				'Content-Length' : Buffer.byteLength(response.body,'gb18030')
-			});*/
-	var buf = new Buffer(body,'binary');
-    var content = new iconv('gb18030','UTF8').convert(buf).toString()
-			res.json(content);
-		}	
-	});	
+	loadTopPosts(function (err, result) {
+		if (err) {
+			res.json(err);
+		} else {
+			res.json(result);
+		}
+	});
 }
 
 exports.getPosts = function (req, res) {
