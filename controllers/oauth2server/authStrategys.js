@@ -39,14 +39,16 @@ passport.use(new LocalStrategy(
  */
 passport.use(new BasicStrategy(
     function (id, secret, done) {
+        console.log("BasicStrategy id "+id + "secret " + secret);
         models.applications.findByClientIdAndSecret(id, secret, function (err, application) {
             if (err) {
                 return done(err, null);
             }
-            if (!client) {
+            if (!application) {
                 return done(null, null);
             }
 
+            console.log("application "+JSON.stringify(application));
             return done(null, application.client);
         });
     }

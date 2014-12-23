@@ -117,6 +117,7 @@ server.exchange(oauth2orize.exchange.code(function (client, code, redirectUri, d
  * application issues an access token on behalf of the user who authorized the code.
  */
 server.exchange(oauth2orize.exchange.password(function(client, username, password, scope, done) {
+    console.log("exchange.password for client " + client + " username " + username);
     //Validate the user
     models.users.findByNameAndPassword(username, password, function (err, user) {
         if (err) {
@@ -156,6 +157,7 @@ server.exchange(oauth2orize.exchange.password(function(client, username, passwor
  */
 server.exchange(oauth2orize.exchange.clientCredentials(function(client, scope, done) {
     var token = utils.uid(config.token.accessTokenLength);
+    console.log("exchange.clientCredentials for client " + client + " token " + token);
     //Pass in a null for user id since there is no user when using this grant type
     models.accessTokens.create(null, client.id, scope, function (err, accessToken) {
         if (err) {
@@ -173,6 +175,7 @@ server.exchange(oauth2orize.exchange.clientCredentials(function(client, scope, d
  * token on behalf of the client who authorized the code
  */
 server.exchange(oauth2orize.exchange.refreshToken(function(client, token, scope, done) {
+    console.log("exchange.refreshToken for client " + client + " token " + token);
     models.refreshTokens.findByToken(token, function (err, refreshToken) {
         if (err) {
             return done(err);
@@ -218,7 +221,7 @@ server.deserializeClient(function (id, done) {
         if (err) {
             return done(err, null);
         }
-
+        console.log("application " + JSON.stringify(application));
         return done(null, application.client);
     });
 });
