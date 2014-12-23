@@ -27,6 +27,7 @@ var server = oauth2orize.createServer();
  * which is bound to these values, and will be exchanged for an access token.
  */
 server.grant(oauth2orize.grant.code(function (client, redirectURI, user, ares, done) {
+    console.log("grant.code for client " + client + " user " + user);
     models.authorizationCodes.create(user.id, client.id, redirectURI, client.scope, function (err, authorizationCode) {
         if (err) {
             return done(err, null);
@@ -44,7 +45,7 @@ server.grant(oauth2orize.grant.code(function (client, redirectURI, user, ares, d
  * which is bound to these values.
  */
 server.grant(oauth2orize.grant.token(function (client, user, ares, done) {
-console.log("grant.token : ", client);
+    console.log("grant.token for client " + client + " user " + user);
     models.accessTokens.create(user.id, client.id, client.scope, function (err, accessToken) {
         if (err) {
             return done(err, null);
@@ -62,6 +63,7 @@ console.log("grant.token : ", client);
  * authorized the code.
  */
 server.exchange(oauth2orize.exchange.code(function (client, code, redirectUri, done) {
+    console.log("exchange.code for client " + client + " code " + code);
     models.authorizationCodes.findOneByCode(code, function (err, authCode) {
         if (err) {
             return done(err);
@@ -204,10 +206,12 @@ server.exchange(oauth2orize.exchange.refreshToken(function(client, token, scope,
 // the client by ID from the database.
 
 server.serializeClient(function (client, done) {
+    console.log("serializeClient for client " + client);
     return done(null, client.id);
 });
 
 server.deserializeClient(function (id, done) {
+    console.log("deserializeClient for id " + id);
     models.applications.findByClientId(id, function (err, application) {
         if (err) {
             return done(err, null);
