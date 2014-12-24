@@ -1,7 +1,5 @@
 var needle = require('../../../lib/needle');
 var config = require('../../../config/');
-//var xml2js = require('xml2js-expat');
-//var parser = new xml2js.Parser('UTF-8');
 
 var debugging   = !!process.env.DEBUG,
     debug       = debugging ? console.log : function() { /* noop */ };
