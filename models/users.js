@@ -10,6 +10,7 @@ exports.findByNameAndPassword = function (name, password, done) {
     if (err) {
       return done(err, null);
   	}else if (!user) {
+  		console.log("cannot find user, try login");
   		loginManager.login(name, password, function (err, success) {
   			if (err || !success) {
   				return done(err, null);
@@ -28,12 +29,20 @@ exports.findByNameAndPassword = function (name, password, done) {
   			}
   		});
   	} else {
+  		console.log("find user : " + JSON.stringify(user));
       return done(null, user);
     }
   });
 };
 
 exports.findByName = function (name, done) {
-  console.log("found user : ", name);
-  return done(null , {name : name});
+  
+  User.findOne({name : name}, function (err, user) {
+  	if (err || !user) {
+  		return done("err", null);
+  	} else {
+  		console.log("found user : ", name);
+  		return done(null , user);
+  	}
+  });
 };

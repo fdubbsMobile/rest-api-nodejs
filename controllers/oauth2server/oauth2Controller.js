@@ -94,7 +94,7 @@ exports.authorization = [
 exports.decision = [
     login.ensureLoggedIn('/oauth2/login'),
     oauth2server.decision(function(req, done) {
-        return done(null, { scope: req.body.scope })
+        return done(null, { scope: req.body.scope });
     })
 ];
 
