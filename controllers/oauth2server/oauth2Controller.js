@@ -76,7 +76,8 @@ exports.authorization = [
                     callback(null, { allow: true });
                 })(req, res, next);
             } else {
-                res.render('oauth2/dialog', { transactionID: req.oauth2.transactionID, user: req.user, application: application });
+                res.render('oauth2/dialog', { transactionID: req.oauth2.transactionID, 
+                    user: req.user, application: application, scope : req.query.scope });
             }
         });
     }
@@ -92,7 +93,9 @@ exports.authorization = [
  */
 exports.decision = [
     login.ensureLoggedIn('/oauth2/login'),
-    oauth2server.decision()
+    oauth2server.decision(function(req, done) {
+        return done(null, { scope: req.body.scope })
+    })
 ];
 
 /**

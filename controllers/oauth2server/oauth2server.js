@@ -27,8 +27,8 @@ var server = oauth2orize.createServer();
  * which is bound to these values, and will be exchanged for an access token.
  */
 server.grant(oauth2orize.grant.code(function (client, redirectURI, user, ares, done) {
-    console.log("grant.code for redirectURI "+ redirectURI + " client " + client + " user " + JSON.stringify(user));
-    models.authorizationCodes.create(user.name, client.id, redirectURI, client.scope, function (err, authorizationCode) {
+    console.log("grant.code for redirectURI "+ redirectURI + " client " + client + " ares " + JSON.stringify(ares));
+    models.authorizationCodes.create(user.name, client.id, redirectURI, ares.scope, function (err, authorizationCode) {
         if (err) {
             return done(err, null);
         }

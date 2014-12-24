@@ -15,6 +15,7 @@
 
 <form action="/oauth2/authorize/decision" method="post" class="pure-form pure-form-stacked">
     <input name="transaction_id" type="hidden" value="<%= transactionID %>">
+    <input name="scope" type="hidden" value="<%= scope %>">
     <fieldset>
         <!-- Upper box with Title, username, and password -->
         <div class="upper-box">
