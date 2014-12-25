@@ -32,7 +32,7 @@ router.route('/boards')
 	.get(apiController.board.getBoards);
 
 router.route('/posts/top')
-	.get(authController.isBearerAuthenticated, apiController.post.getTopPosts);
+	.get(apiController.post.getTopPosts);
 
 router.route('/posts/')
 	.get(apiController.post.getPosts);

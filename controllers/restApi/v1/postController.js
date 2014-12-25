@@ -13,16 +13,15 @@ function constructPost(rawData) {
 	var title = rawData._;
 	var detail = rawData.$;
 
-	
-	var poster = {};
-	poster.name = detail.owner;
-
-	var post = {};
-	post.id = detail.gid;
-	post.title = title;
-	post.board = detail.board;
-	post.reply_count = detail.count;
-	post.poster = poster;
+	var post = {
+		id : detail.gid,
+		title : title,
+		board : detail.board,
+		reply_count : detail.count,
+		poster : {
+			name : detail.owner
+		}
+	};
 
 	return post;
 }
