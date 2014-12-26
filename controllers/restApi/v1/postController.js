@@ -29,16 +29,23 @@ function constructPost(rawData) {
 function loadTopPosts (callback) {
 	var url = config.bbs.host + "/bbs/top10";
 	needle.get(url, options, function (error, response, body) {
-		if (!error && response.statusCode == 200) {
-			var result = [];
-			var topPosts = body.bbstop10.top;
-			for (var key in topPosts) {
-				result.push(constructPost(topPosts[key]));
-			}
-
-			callback(null, result);
+		if (error) {
+			console.log("err "+ error);
+			callback(error, null);
 		} else {
-			callback("internal error", null);
+			if (response.statusCode == 200) {
+				var result = [];
+				var topPosts = body.bbstop10.top;
+				for (var key in topPosts) {
+					result.push(constructPost(topPosts[key]));
+				}
+
+				callback(null, result);
+			} else {
+				console.log("response status "+ response.statusCode);
+				console.log("response body "+ response.body);
+				callback(null, null);
+			}
 		}
 	});
 }
@@ -57,8 +64,8 @@ function loadReplies (id, loaded_by, board, cursor, count, callback) {
 
 exports.getTopPosts = function (req, res) {
 	loadTopPosts(function (err, result) {
-		if (err) {
-			res.json(err);
+		if (err || !result) {
+			res.json("Internal Service Error");
 		} else {
 			res.json(result);
 		}

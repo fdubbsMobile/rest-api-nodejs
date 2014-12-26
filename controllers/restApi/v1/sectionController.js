@@ -99,8 +99,8 @@ function loadSectionDetail (id, callback) {
 
 exports.getSections = function (req, res) {
 	loadSections(function (err, result) {
-		if (err) {
-			res.json(err);
+		if (err || !result) {
+			res.json("Internal Service Error");
 		} else {
 			res.json(result);
 		}
@@ -113,7 +113,7 @@ exports.getSectionDetail = function (req, res) {
 	if (sectionId) {
 		loadSectionDetail(sectionId, function (err, result) {
 			if (err) {
-				res.json(err);
+				res.json("Internal Service Error");
 			} else if (!result) {
 				res.json("Section Id Invalid");
 			} else {
