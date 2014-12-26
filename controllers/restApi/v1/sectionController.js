@@ -58,8 +58,8 @@ function loadSections (callback) {
 				}
 
 				var result = {
-					section_list : sections,
-					count : sections.length
+					count : sections.length,
+					section_list : sections
 				};
 
 				callback(null, result);
