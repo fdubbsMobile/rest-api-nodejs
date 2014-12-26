@@ -22,31 +22,82 @@ function constructSection(rawData) {
 	return section;
 }
 
+function constructBoard(rawData) {
+	var detail = rawData.$;
+	var cate = detail.cate;
+	var idx1 = cate.indexOf("[");
+	var idx2 = cate.indexOf("]");
+	var board = {
+		name : detail.title,
+		description : detail.desc,
+		category : cate.substring(idx1+1, idx2),
+		total_posts : detail.count,
+		is_directory : detail.dir == "0" ? false : true,
+		has_unread : detail.read == "1" ? true : false,
+	};
+
+	if (detail.bm != "") {
+		board.managers = detail.bm.split(" ");
+	}
+
+	return board;
+}
+
 function loadSections (callback) {
 	var url = config.bbs.host + "/bbs/sec";
 	needle.get(url, options, function (error, response, body) {
-		if (!error && response.statusCode == 200) {
-			var result = [];
-			var allSections = body.bbssec.sec;
-			for (var key in allSections) {
-				result.push(constructSection(allSections[key]));
-			}
-
-			callback(null, result);
-		} else {
-			console.log("response "+ JSON.stringify(response));
+		if (error) {
 			console.log("err "+ error);
-			callback("internal error", null);
+			callback(error, null);
+		} else {
+			if (response.statusCode == 200) {
+				var result = [];
+				var allSections = body.bbssec.sec;
+				for (var key in allSections) {
+					result.push(constructSection(allSections[key]));
+				}
+
+				callback(null, result);
+			} else {
+				console.log("response status "+ response.statusCode);
+				console.log("response body "+ response.body);
+				callback(null, null);
+			}
 		}
 	});
 }
 
 function loadSectionDetail (id, callback) {
+	var url = config.bbs.host + "/bbs/boa?s="+id;
+	needle.get(url, options, function (error, response, body) {
+		if (error) {
+			console.log("err "+ error);
+			callback(error, null);
+		} else {
+			if (response.statusCode == 200) {
+				var boards = [];
+				var allBoards = body.bbsboa.brd;
+				for (var key in allBoards) {
+					boards.push(constructBoard(allBoards[key]));
+				}
 
+				var result = {
+					id : id,
+					name : body.bbsboa.$.title,
+					boards : boards
+				};
+
+				callback(null, result);
+			} else {
+				console.log("response status "+ response.statusCode);
+				console.log("response body "+ response.body);
+				callback(null, null);
+			}
+		}
+	});
 }
 
 exports.getSections = function (req, res) {
-	//res.json({ message: '/sections' });
 	loadSections(function (err, result) {
 		if (err) {
 			res.json(err);
@@ -57,5 +108,19 @@ exports.getSections = function (req, res) {
 }
 
 exports.getSectionDetail = function (req, res) {
-	res.json({ message: '/section/:id' });
+	//res.json({ message: '/section/:id' });
+	var sectionId = req.params.id;
+	if (sectionId) {
+		loadSectionDetail(sectionId, function (err, result) {
+			if (err) {
+				res.json(err);
+			} else if (!result) {
+				res.json("Section Id Invalid");
+			} else {
+				res.json(result);
+			}
+		});
+	} else {
+		res.json("Section Id Missing");
+	}
 }
