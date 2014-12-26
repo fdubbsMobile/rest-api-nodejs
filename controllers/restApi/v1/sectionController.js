@@ -51,11 +51,16 @@ function loadSections (callback) {
 			callback(error, null);
 		} else {
 			if (response.statusCode == 200) {
-				var result = [];
+				var sections = [];
 				var allSections = body.bbssec.sec;
 				for (var key in allSections) {
-					result.push(constructSection(allSections[key]));
+					sections.push(constructSection(allSections[key]));
 				}
+
+				var result = {
+					section_list : sections,
+					count : sections.length
+				};
 
 				callback(null, result);
 			} else {
