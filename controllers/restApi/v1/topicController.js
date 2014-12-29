@@ -9,10 +9,54 @@ var options = {
   parse : true
 }
 
+function constructTopic(rawData) {
+	var title = rawData._;
+	var detail = rawData.$;
 
-function constructPostsUrl(loaded_by, board, cursor, count) {
-	var url = config.bbs.host + "/bbs/doc";
+	var topic = {
+		id : detail.gid,
+		title : title,
+		board : detail.board,
+		post_count : detail.count,
+		poster : {
+			name : detail.owner
+		}
+	};
 
+	return topic;
+}
+
+function loadHotTopics (callback) {
+	var url = config.bbs.host + "/bbs/top10";
+	needle.get(url, options, function (error, response, body) {
+		if (error) {
+			console.log("err "+ error);
+			callback(error, null);
+		} else {
+			if (response.statusCode == 200) {
+				var topics = [];
+				var topTopics = body.bbstop10.top;
+				for (var key in topTopics) {
+					topics.push(constructTopic(topTopics[key]));
+				}
+
+				var result = {
+					count : topics.length,
+					topic_list : topics
+				};
+
+				callback(null, result);
+			} else {
+				console.log("response status "+ response.statusCode);
+				console.log("response body "+ response.body);
+				callback(null, null);
+			}
+		}
+	});
+}
+
+function constructTopicsUrl(loaded_by, board, cursor, count) {
+	var url = config.bbs.host + "/bbs/tdoc";
 	if (loaded_by == "BNAME") {
 		url += "?board=";
 		url += board;
@@ -27,36 +71,31 @@ function constructPostsUrl(loaded_by, board, cursor, count) {
 	return url;
 }
 
-function constructPosts(rawData, startIdx, count) {
+function constructTopics(rawData, startIdx, count) {
 	var idx = 0;
-	var posts = [];
+	var topics = [];
 	for (var key in rawData) {
 		if (idx < startIdx) {
 			idx++;
 			continue;
 		}
-		var postMetadata = constructPostMetaData(rawData[key]);
-		if (!postMetadata) {
+		var topicMetadata = constructTopicMetaData(rawData[key]);
+		if (!topicMetadata) {
 			continue;
 		}
-		posts.push(postMetadata);
+		topics.push(topicMetadata);
 		count--;
 		if (count ==0) {
 			break;
 		}
 	}
 
-	return posts;
+	return topics;
 }
 
-function constructPostMetaData(rawData) {
+function constructTopicMetaData(rawData) {
 	var title = rawData._;
 	var detail = rawData.$;
-
-	if (detail.sticky 
-		&& detail.sticky == "1") {
-		return null;
-	}
 
 	var metadata = {
 		id : detail.id,
@@ -69,9 +108,6 @@ function constructPostMetaData(rawData) {
 	};
 	return metadata;
 }
-
-
-
 
 function getPreviousCursor(cursor, count, total) {
 	if (cursor >= total) {
@@ -94,8 +130,8 @@ function getNextCursor(cursor, count) {
 	return cursor - count;
 }
 
-function loadPosts (loaded_by, board, cursor, count, callback) {
-	var url = constructPostsUrl(loaded_by, board, cursor, count);
+function loadTopics (loaded_by, board, cursor, count, callback) {
+	var url = constructTopicsUrl(loaded_by, board, cursor, count);
 	needle.get(url, options, function (error, response, body) {
 		if (error) {
 			console.log("err "+ error);
@@ -111,17 +147,17 @@ function loadPosts (loaded_by, board, cursor, count, callback) {
 					return callback("Invalid cursor : " + cursor, null);
 				}
 
-				var posts = constructPosts(body.bbsdoc.po, cursor - currentCursor, count);		
+				var topics = constructTopics(body.bbsdoc.po, cursor - currentCursor, count);		
 				var previousCursor = getPreviousCursor(cursor == -1 ? currentCursor : cursor, 
-												posts.length, totalCount);
+												topics.length, totalCount);
 				var nextCursor = getNextCursor(cursor == -1 ? currentCursor : cursor, pageCount);
 				var result = {
-					count : posts.length,
+					count : topics.length,
 					previous_cursor : previousCursor,
 					next_cursor : nextCursor,
-					post_list : posts
+					topic_list : topics
 				};
-
+				
 				return callback(null, result);
 			} else {
 				console.log("response status "+ response.statusCode);
@@ -132,16 +168,21 @@ function loadPosts (loaded_by, board, cursor, count, callback) {
 	});
 }
 
-function loadPostDetail (id, loaded_by, board, callback) {
+function loadTopicDetail (id, loaded_by, board, callback) {
 
 }
 
-function loadReplies (id, loaded_by, board, cursor, count, callback) {
+exports.getHotTopics = function (req, res) {
+	loadHotTopics(function (err, result) {
+		if (err || !result) {
+			res.json("Internal Service Error");
+		} else {
+			res.json(result);
+		}
+	});
+}
 
-} 
-
-
-exports.getPosts = function (req, res) {
+exports.getTopics= function (req, res) {
 	//res.json({ message: '/posts/' });
 	var board = req.query.board;
 	if (board) {
@@ -151,7 +192,7 @@ exports.getPosts = function (req, res) {
 					parseInt(req.query.cursor) : -1;
 		var count = (req.query.count && parseInt(req.query.count) < 20 && parseInt(req.query.count) > 0) ?
 					parseInt(req.query.count) : 20;
-		loadPosts(loaded_by, board, cursor, count, function (err, result) {
+		loadTopics(loaded_by, board, cursor, count, function (err, result) {
 			if (err || !result) {
 				res.json("Internal Service Error");
 			} else {
@@ -159,7 +200,7 @@ exports.getPosts = function (req, res) {
 			}
 		});
 	} else {
-		var errMsg = "Ivalid Input!";
+		var errMsg = "Invalid Input!";
 		if (!board) {
 			errMsg += "board Missing;";
 		}
@@ -167,13 +208,13 @@ exports.getPosts = function (req, res) {
 	}
 }
 
-exports.getPostDetail = function (req, res) {
+exports.getTopicDetail = function (req, res) {
 	var id = req.params.id;
 	var board = req.query.board;
 	if (id && board) {
 		var loaded_by = req.query.loaded_by ? 
 					req.query.loaded_by : "BNAME";
-		loadPostDetail(id, loaded_by, board, function (err, result) {
+		loadTopicDetail(id, loaded_by, board, function (err, result) {
 			if (err || !result) {
 				res.json("Internal Service Error");
 			} else {
@@ -181,40 +222,9 @@ exports.getPostDetail = function (req, res) {
 			}
 		});
 	} else {
-		var errMsg = "Ivalid Input!";
+		var errMsg = "Invalid Input!";
 		if (!id) {
-			errMsg += "Post Id Missing;";
-		}
-
-		if (!board) {
-			errMsg += "board Missing;";
-		}
-		res.json(errMsg);
-	}
-}
-
-exports.getReplies = function (req, res) {
-	//res.json({ message: '/post/:id/reply' });
-	var id = req.params.id;
-	var board = req.query.board;
-	if (id && board) {
-		var loaded_by = req.query.loaded_by ? 
-					req.query.loaded_by : "BID";
-		var cursor = req.query.cursor ?
-					req.query.cursor : -1;
-		var count = req.query.count ?
-					req.query.count : 20;
-		loadReplies(id, loaded_by, board, cursor, count, function (err, result) {
-			if (err || !result) {
-				res.json("Internal Service Error");
-			} else {
-				res.json(result);
-			}
-		});
-	} else {
-		var errMsg = "Ivalid Input!";
-		if (!id) {
-			errMsg += "Post Id Missing;";
+			errMsg += "Topic Id Missing;";
 		}
 
 		if (!board) {

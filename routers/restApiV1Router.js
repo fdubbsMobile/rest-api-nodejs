@@ -31,17 +31,19 @@ router.route('/section/:id')
 router.route('/boards')
 	.get(apiController.board.getBoards);
 
-router.route('/posts/top')
-	.get(apiController.post.getTopPosts);
-
 router.route('/posts/')
 	.get(apiController.post.getPosts);
 
 router.route('/post/:id')
 	.get(apiController.post.getPostDetail);
 
-router.route('/post/:id/reply')
-	.get(apiController.post.getReplies);
+router.route('/topics/hot')
+	.get(apiController.topic.getHotTopics);
 
+router.route('/topics/')
+	.get(apiController.topic.getTopics);
+
+router.route('/topic/:id')
+	.get(apiController.topic.getTopicDetail);
 
 exports.router = router;
