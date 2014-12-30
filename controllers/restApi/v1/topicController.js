@@ -1,6 +1,6 @@
 var needle = require('../../../lib/needle');
 var config = require('../../../config/');
-var xmldoc = require('xmldoc');
+var XmlDocument = require('xmldoc').XmlDocument;
 var _ = require('underscore');
 
 var debugging   = !!process.env.DEBUG,
@@ -111,7 +111,7 @@ function constructTopicMetaData(rawData) {
 	return metadata;
 }
 
-function getPreviousCursor(cursor, count, total) {
+function getPreviousCursorOfTopics(cursor, count, total) {
 	if (cursor >= total) {
 		return -1;
 	}
@@ -122,7 +122,7 @@ function getPreviousCursor(cursor, count, total) {
 	return cursor + count;
 }
 
-function getNextCursor(cursor, count) {
+function getNextCursorOfTopics(cursor, count) {
 	if (cursor <=  1) {
 		return -1;
 	}
@@ -150,9 +150,9 @@ function loadTopics (loaded_by, board, cursor, count, callback) {
 				}
 
 				var topics = constructTopics(body.bbsdoc.po, cursor - currentCursor, count);		
-				var previousCursor = getPreviousCursor(cursor == -1 ? currentCursor : cursor, 
+				var previousCursor = getPreviousCursorOfTopics(cursor == -1 ? currentCursor : cursor, 
 												topics.length, totalCount);
-				var nextCursor = getNextCursor(cursor == -1 ? currentCursor : cursor, pageCount);
+				var nextCursor = getNextCursorOfTopics(cursor == -1 ? currentCursor : cursor, pageCount);
 				var result = {
 					count : topics.length,
 					previous_cursor : previousCursor,
@@ -186,6 +186,27 @@ function constructTopicDetailUrl(id, loaded_by, board, cursor, count) {
 	return url;
 }
 
+function getPreviousCursorOfTopicDetail(cursor, count, total) {
+	if (cursor >= total) {
+		return -1;
+	}
+
+	if (cursor + count >= total) {
+		return total;
+	}
+	return cursor + count;
+}
+
+function getNextCursorOfTopicDetail(cursor, count) {
+	if (cursor <=  1) {
+		return -1;
+	}
+	if (cursor - count <= 0) {
+		return 1;
+	}
+	return cursor - count;
+}
+
 function loadTopicDetail (id, loaded_by, board, cursor, count, callback) {
 	var url = constructTopicDetailUrl(id, loaded_by, board, cursor, count);
 	needle.get(url, {decode : true, parse : false}, function (error, response, body) {
@@ -194,9 +215,14 @@ function loadTopicDetail (id, loaded_by, board, cursor, count, callback) {
 			return callback(error, null);
 		} else {
 			if (response.statusCode == 200) {
-				var result = [];
-				var document = new xmldoc.XmlDocument(response.body);
-				var postsRaw = document.childrenNamed("po");
+				var posts = [];
+				var doc = new XmlDocument(response.body);
+				var pageCount = doc.attr.page;
+				var gid = doc.attr.gid;
+				var postsRaw = doc.childrenNamed("po");
+				var postCount = postsRaw.length;
+				//var firstFid = ;
+				//var lastFid = ;
 				_.each(postsRaw, function(postRaw, index, list) {
 					var post = {
 						id : postRaw.attr.fid,
@@ -218,8 +244,36 @@ function loadTopicDetail (id, loaded_by, board, cursor, count, callback) {
 							//post.poster.sign = pa.toString({compressed:true});
 						}
 					});
-					result.push(post);
+					posts.push(post);
 				});
+				/**
+				<xsl:template name="tcon-navbar">
+<a href="{/bbstcon/session/@m}doc?bid={@bid}">
+<img src="../images/button/home.gif"/>
+本讨论区
+</a>
+<xsl:if test="count(po) = @page">
+<a href="tcon?new=1&bid={@bid}&g={@gid}&f={po[last()]/@fid}&a=n">
+<img src="../images/button/down.gif"/>
+下页
+</a>
+</xsl:if>
+<xsl:if test="po[1]/@fid != @gid">
+<a href="tcon?new=1&bid={@bid}&g={@gid}&f={po[1]/@fid}&a=p">
+<img src="../images/button/up.gif"/>
+上页
+</a>
+</xsl:if>
+<xsl:if test="not(@tlast)">
+<a href="tcon?new=1&bid={@bid}&f={@gid}&a=a">下一主题</a>
+</xsl:if>
+<xsl:if test="not(@tfirst)">
+<a href="tcon?new=1&bid={@bid}&f={@gid}&a=b">上一主题</a>
+</xsl:if>
+</xsl:template>
+
+
+				*/
 				//var pos = document.descendantWithPath("bbstcon.po@bid");
 				//console.log("pos"+pos.toString({compressed:true}));
 				//console.log(document.toString({compressed:true}));
@@ -243,7 +297,7 @@ function loadTopicDetail (id, loaded_by, board, cursor, count, callback) {
 					topic_list : topics
 				};
 				*/
-				return callback(null, result);
+				return callback(null, posts);
 			} else {
 				console.log("response status "+ response.statusCode);
 				console.log("response body "+ response.body);
