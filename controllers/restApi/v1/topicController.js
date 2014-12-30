@@ -1,5 +1,7 @@
 var needle = require('../../../lib/needle');
 var config = require('../../../config/');
+var xmldoc = require('xmldoc');
+var _ = require('underscore');
 
 var debugging   = !!process.env.DEBUG,
     debug       = debugging ? console.log : function() { /* noop */ };
@@ -192,6 +194,35 @@ function loadTopicDetail (id, loaded_by, board, cursor, count, callback) {
 			return callback(error, null);
 		} else {
 			if (response.statusCode == 200) {
+				var result = [];
+				var document = new xmldoc.XmlDocument(response.body);
+				var postsRaw = document.childrenNamed("po");
+				_.each(postsRaw, function(postRaw, index, list) {
+					var post = {
+						id : postRaw.attr.fid,
+						//title : postRaw.valueWithPath("title"),
+						poster : {
+							name : postRaw.valueWithPath("owner"),
+							nick : postRaw.valueWithPath("nick")
+						},
+						post_time : postRaw.valueWithPath("date"),
+
+					};
+					_.each(postRaw.childrenNamed("pa"), function(pa, idx, list1) {
+						var m = pa.attr.m;
+						if (m == "t") {
+							post.body = pa.toString({compressed:true});
+						} else if (m == "q") {
+							//post.qoute = pa.toString({compressed:true});
+						} else if (m == "s") {
+							//post.poster.sign = pa.toString({compressed:true});
+						}
+					});
+					result.push(post);
+				});
+				//var pos = document.descendantWithPath("bbstcon.po@bid");
+				//console.log("pos"+pos.toString({compressed:true}));
+				//console.log(document.toString({compressed:true}));
 				/*
 				var totalCount = parseInt(body.bbsdoc.brd.$.total);
 				var pageCount = parseInt(body.bbsdoc.brd.$.page);
@@ -212,7 +243,7 @@ function loadTopicDetail (id, loaded_by, board, cursor, count, callback) {
 					topic_list : topics
 				};
 				*/
-				return callback(null, response.body);
+				return callback(null, result);
 			} else {
 				console.log("response status "+ response.statusCode);
 				console.log("response body "+ response.body);
