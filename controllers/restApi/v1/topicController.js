@@ -168,8 +168,58 @@ function loadTopics (loaded_by, board, cursor, count, callback) {
 	});
 }
 
-function loadTopicDetail (id, loaded_by, board, callback) {
+function constructTopicDetailUrl(id, loaded_by, board, cursor, count) {
+	var url = config.bbs.host + "/bbs/tcon?new=1&g="+id;
+	if (loaded_by == "BNAME") {
+		url += "&board=";
+		url += board;
+	} else {
+		url += "&bid=";
+		url += board;
+	}
+	if (cursor != -1) {
+		url += "&f=";
+		url += cursor;
+	}
+	return url;
+}
 
+function loadTopicDetail (id, loaded_by, board, cursor, count, callback) {
+	var url = constructTopicDetailUrl(id, loaded_by, board, cursor, count);
+	needle.get(url, {decode : true, parse : false}, function (error, response, body) {
+		if (error) {
+			console.log("err "+ error);
+			return callback(error, null);
+		} else {
+			if (response.statusCode == 200) {
+				/*
+				var totalCount = parseInt(body.bbsdoc.brd.$.total);
+				var pageCount = parseInt(body.bbsdoc.brd.$.page);
+				var currentCursor = parseInt(body.bbsdoc.brd.$.start);
+
+				if (cursor > totalCount) {
+					return callback("Invalid cursor : " + cursor, null);
+				}
+
+				var topics = constructTopics(body.bbsdoc.po, cursor - currentCursor, count);		
+				var previousCursor = getPreviousCursor(cursor == -1 ? currentCursor : cursor, 
+												topics.length, totalCount);
+				var nextCursor = getNextCursor(cursor == -1 ? currentCursor : cursor, pageCount);
+				var result = {
+					count : topics.length,
+					previous_cursor : previousCursor,
+					next_cursor : nextCursor,
+					topic_list : topics
+				};
+				*/
+				return callback(null, response.body);
+			} else {
+				console.log("response status "+ response.statusCode);
+				console.log("response body "+ response.body);
+				return callback(null, null);
+			}
+		}
+	});
 }
 
 exports.getHotTopics = function (req, res) {
@@ -187,10 +237,11 @@ exports.getTopics= function (req, res) {
 	var board = req.query.board;
 	if (board) {
 		var loaded_by = req.query.loaded_by ? 
-					req.query.loaded_by : "BID";
+					req.query.loaded_by : "BNAME";
 		var cursor = req.query.cursor ?
 					parseInt(req.query.cursor) : -1;
-		var count = (req.query.count && parseInt(req.query.count) < 20 && parseInt(req.query.count) > 0) ?
+		var count = (req.query.count && parseInt(req.query.count) < 20 
+			&& parseInt(req.query.count) > 0) ?
 					parseInt(req.query.count) : 20;
 		loadTopics(loaded_by, board, cursor, count, function (err, result) {
 			if (err || !result) {
@@ -214,7 +265,12 @@ exports.getTopicDetail = function (req, res) {
 	if (id && board) {
 		var loaded_by = req.query.loaded_by ? 
 					req.query.loaded_by : "BNAME";
-		loadTopicDetail(id, loaded_by, board, function (err, result) {
+		var cursor = req.query.cursor ?
+					parseInt(req.query.cursor) : -1;
+		var count = (req.query.count && parseInt(req.query.count) < 20 
+			&& parseInt(req.query.count) > 0) ?
+					parseInt(req.query.count) : 20;
+		loadTopicDetail(id, loaded_by, board, cursor, count, function (err, result) {
 			if (err || !result) {
 				res.json("Internal Service Error");
 			} else {
