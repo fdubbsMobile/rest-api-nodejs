@@ -186,25 +186,43 @@ function constructTopicDetailUrl(id, loaded_by, board, cursor, count) {
 	return url;
 }
 
-function getPreviousCursorOfTopicDetail(cursor, count, total) {
-	if (cursor >= total) {
+function getPreviousCursorOfTopicDetail(gid, firstFid) {
+	if (firstFid == gid) {
 		return -1;
 	}
-
-	if (cursor + count >= total) {
-		return total;
-	}
-	return cursor + count;
+	return firstFid;
 }
 
-function getNextCursorOfTopicDetail(cursor, count) {
-	if (cursor <=  1) {
+function getNextCursorOfTopicDetail(postCount, pageCount, lastFid) {
+	if (postCount !=  pageCount) {
 		return -1;
 	}
-	if (cursor - count <= 0) {
-		return 1;
-	}
-	return cursor - count;
+	return lastFid;
+}
+
+function constructPost(postRaw) {
+	var post = {
+		id : postRaw.attr.fid,
+		//title : postRaw.valueWithPath("title"),
+		poster : {
+			name : postRaw.valueWithPath("owner"),
+			nick : postRaw.valueWithPath("nick")
+		},
+		post_time : postRaw.valueWithPath("date"),
+
+	};
+	_.each(postRaw.childrenNamed("pa"), function(pa, idx, list1) {
+		var m = pa.attr.m;
+		if (m == "t") {
+			post.body = pa.toString({compressed:true});
+		} else if (m == "q") {
+			//post.qoute = pa.toString({compressed:true});
+		} else if (m == "s") {
+			//post.poster.sign = pa.toString({compressed:true});
+		}
+	});
+
+	return post;
 }
 
 function loadTopicDetail (id, loaded_by, board, cursor, count, callback) {
@@ -215,89 +233,31 @@ function loadTopicDetail (id, loaded_by, board, cursor, count, callback) {
 			return callback(error, null);
 		} else {
 			if (response.statusCode == 200) {
-				var posts = [];
+				
 				var doc = new XmlDocument(response.body);
 				var pageCount = doc.attr.page;
 				var gid = doc.attr.gid;
 				var postsRaw = doc.childrenNamed("po");
 				var postCount = postsRaw.length;
-				//var firstFid = ;
-				//var lastFid = ;
-				_.each(postsRaw, function(postRaw, index, list) {
-					var post = {
-						id : postRaw.attr.fid,
-						//title : postRaw.valueWithPath("title"),
-						poster : {
-							name : postRaw.valueWithPath("owner"),
-							nick : postRaw.valueWithPath("nick")
-						},
-						post_time : postRaw.valueWithPath("date"),
+				var firstFid = _.first(postsRaw).attr.fid;
+				var lastFid = _.last(postsRaw).attr.fid;
 
-					};
-					_.each(postRaw.childrenNamed("pa"), function(pa, idx, list1) {
-						var m = pa.attr.m;
-						if (m == "t") {
-							post.body = pa.toString({compressed:true});
-						} else if (m == "q") {
-							//post.qoute = pa.toString({compressed:true});
-						} else if (m == "s") {
-							//post.poster.sign = pa.toString({compressed:true});
-						}
-					});
+
+				var previousCursor = getPreviousCursorOfTopicDetail(gid, firstFid);
+				var nextCursor = getNextCursorOfTopicDetail(postCount, pageCount, lastFid);
+				var posts = [];
+				_.each(postsRaw, function(postRaw, index, list) {
+					var post = constructPost(postRaw);
 					posts.push(post);
 				});
-				/**
-				<xsl:template name="tcon-navbar">
-<a href="{/bbstcon/session/@m}doc?bid={@bid}">
-<img src="../images/button/home.gif"/>
-本讨论区
-</a>
-<xsl:if test="count(po) = @page">
-<a href="tcon?new=1&bid={@bid}&g={@gid}&f={po[last()]/@fid}&a=n">
-<img src="../images/button/down.gif"/>
-下页
-</a>
-</xsl:if>
-<xsl:if test="po[1]/@fid != @gid">
-<a href="tcon?new=1&bid={@bid}&g={@gid}&f={po[1]/@fid}&a=p">
-<img src="../images/button/up.gif"/>
-上页
-</a>
-</xsl:if>
-<xsl:if test="not(@tlast)">
-<a href="tcon?new=1&bid={@bid}&f={@gid}&a=a">下一主题</a>
-</xsl:if>
-<xsl:if test="not(@tfirst)">
-<a href="tcon?new=1&bid={@bid}&f={@gid}&a=b">上一主题</a>
-</xsl:if>
-</xsl:template>
-
-
-				*/
-				//var pos = document.descendantWithPath("bbstcon.po@bid");
-				//console.log("pos"+pos.toString({compressed:true}));
-				//console.log(document.toString({compressed:true}));
-				/*
-				var totalCount = parseInt(body.bbsdoc.brd.$.total);
-				var pageCount = parseInt(body.bbsdoc.brd.$.page);
-				var currentCursor = parseInt(body.bbsdoc.brd.$.start);
-
-				if (cursor > totalCount) {
-					return callback("Invalid cursor : " + cursor, null);
-				}
-
-				var topics = constructTopics(body.bbsdoc.po, cursor - currentCursor, count);		
-				var previousCursor = getPreviousCursor(cursor == -1 ? currentCursor : cursor, 
-												topics.length, totalCount);
-				var nextCursor = getNextCursor(cursor == -1 ? currentCursor : cursor, pageCount);
 				var result = {
-					count : topics.length,
+					count : posts.length,
 					previous_cursor : previousCursor,
 					next_cursor : nextCursor,
-					topic_list : topics
+					post_list : posts
 				};
-				*/
-				return callback(null, posts);
+				
+				return callback(null, result);
 			} else {
 				console.log("response status "+ response.statusCode);
 				console.log("response body "+ response.body);
