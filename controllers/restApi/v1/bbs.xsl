@@ -1,4 +1,3 @@
-This XML file does not appear to have any style information associated with it. The document tree is shown below.
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 	<xsl:import href="showpost.xsl"/>
 	<xsl:output method="html" encoding="gb2312" indent="no" doctype-public="-//W3C//DTD HTML 4.01//EN" doctype-system="http://www.w3.org/TR/html4/strict.dtd"/>
@@ -1088,9 +1087,26 @@ This XML file does not appear to have any style information associated with it. 
 			</div>
 		</xsl:for-each>
 	</xsl:template>
-	<xsl:template match="br">...</xsl:template>
-	<xsl:template match="c">...</xsl:template>
-	<xsl:template match="a">...</xsl:template>
+	<xsl:template match="br">
+		<br/>
+	</xsl:template>
+	<xsl:template match="c">
+		<span class="a{@h}{@f} a{@b}">
+			<xsl:value-of select="."/>
+		</span>
+	</xsl:template>
+	<xsl:template match="a">
+		<a href="{@href}">
+			<xsl:choose>
+				<xsl:when test="@i">
+					<img src="{@href}"/>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="@href"/>
+				</xsl:otherwise>
+			</xsl:choose>
+		</a>
+	</xsl:template>
 	<xsl:template name="con-linkbar">
 		<xsl:variable name="param">
 			bid=

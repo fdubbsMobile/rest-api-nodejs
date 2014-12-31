@@ -170,7 +170,7 @@ function loadTopics (loaded_by, board, cursor, count, callback) {
 	});
 }
 
-function constructTopicDetailUrl(id, loaded_by, board, cursor, count) {
+function constructTopicDetailUrl(id, loaded_by, board, cursor, cursor_type) {
 	var url = config.bbs.host + "/bbs/tcon?new=1&g="+id;
 	if (loaded_by == "BNAME") {
 		url += "&board=";
@@ -183,6 +183,11 @@ function constructTopicDetailUrl(id, loaded_by, board, cursor, count) {
 		url += "&f=";
 		url += cursor;
 	}
+	if (cursor_type == "NEXT") {
+		url += "&a=n";
+	} else {
+		url += "&a=p";
+	}
 	return url;
 }
 
@@ -193,40 +198,91 @@ function getPreviousCursorOfTopicDetail(gid, firstFid) {
 	return firstFid;
 }
 
-function getNextCursorOfTopicDetail(postCount, pageCount, lastFid) {
+function getNextCursorOfTopicDetail(postCount, pageCount, lastFid, isLastPage) {
 	if (postCount !=  pageCount) {
+		return -1;
+	}
+
+	if (isLastPage) {
 		return -1;
 	}
 	return lastFid;
 }
 
+function parseContent(contentRaw) {
+	var content = "";
+	_.each(contentRaw.childrenNamed("p"), function(para, idx, paras) {
+		content +="<p>";
+		var child = para.firstChild;
+		if (child) {
+			var name = child.name;
+			if (name == "br") {
+				content +="<br/>";
+			} else if (name == "a") {
+				var href = child.attr.href;
+				content += "<a href='";
+				content += href;
+				content += "'>";
+				if (child.attr.i) {
+					content += "<img src='";
+					content += href;
+					content += "'/>"
+				} else {
+					content += href;
+				}
+			} else if (name == "c") {
+				content += "<span class='a";
+				content += child.attr.h;
+				content += child.attr.f;
+				content += " a";
+				content += child.attr.b;
+				content += "'>";
+				content += child.val;
+				content += "</span>";
+				
+			}
+		} else {
+			content += para.val;
+		}
+		content +="</p>";
+	});
+	return content;
+}
+
 function constructPost(postRaw) {
+	
+	var body = "";
+	var qoute = "";
+	var sign = "";
+	_.each(postRaw.childrenNamed("pa"), function(pa, idx, list1) {
+		var m = pa.attr.m;
+		if (m == "t") {
+			body += parseContent(pa);
+		} else if (m == "q") {
+			//post.qoute = pa.toString({compressed:true});
+		} else if (m == "s") {
+			//post.poster.sign = pa.toString({compressed:true});
+			sign += parseContent(pa);
+		}
+	});
+
 	var post = {
 		id : postRaw.attr.fid,
 		//title : postRaw.valueWithPath("title"),
 		poster : {
 			name : postRaw.valueWithPath("owner"),
-			nick : postRaw.valueWithPath("nick")
+			nick : postRaw.valueWithPath("nick"),
+			sign : sign
 		},
 		post_time : postRaw.valueWithPath("date"),
-
+		body : body
 	};
-	_.each(postRaw.childrenNamed("pa"), function(pa, idx, list1) {
-		var m = pa.attr.m;
-		if (m == "t") {
-			post.body = pa.toString({compressed:true});
-		} else if (m == "q") {
-			//post.qoute = pa.toString({compressed:true});
-		} else if (m == "s") {
-			//post.poster.sign = pa.toString({compressed:true});
-		}
-	});
 
 	return post;
 }
 
-function loadTopicDetail (id, loaded_by, board, cursor, count, callback) {
-	var url = constructTopicDetailUrl(id, loaded_by, board, cursor, count);
+function loadTopicDetail (id, loaded_by, board, cursor, cursor_type, callback) {
+	var url = constructTopicDetailUrl(id, loaded_by, board, cursor, cursor_type);
 	needle.get(url, {decode : true, parse : false}, function (error, response, body) {
 		if (error) {
 			console.log("err "+ error);
@@ -235,6 +291,7 @@ function loadTopicDetail (id, loaded_by, board, cursor, count, callback) {
 			if (response.statusCode == 200) {
 				
 				var doc = new XmlDocument(response.body);
+				var isLastPage = doc.attr.last;
 				var pageCount = doc.attr.page;
 				var gid = doc.attr.gid;
 				var postsRaw = doc.childrenNamed("po");
@@ -244,7 +301,7 @@ function loadTopicDetail (id, loaded_by, board, cursor, count, callback) {
 
 
 				var previousCursor = getPreviousCursorOfTopicDetail(gid, firstFid);
-				var nextCursor = getNextCursorOfTopicDetail(postCount, pageCount, lastFid);
+				var nextCursor = getNextCursorOfTopicDetail(postCount, pageCount, lastFid, isLastPage);
 				var posts = [];
 				_.each(postsRaw, function(postRaw, index, list) {
 					var post = constructPost(postRaw);
@@ -312,10 +369,9 @@ exports.getTopicDetail = function (req, res) {
 					req.query.loaded_by : "BNAME";
 		var cursor = req.query.cursor ?
 					parseInt(req.query.cursor) : -1;
-		var count = (req.query.count && parseInt(req.query.count) < 20 
-			&& parseInt(req.query.count) > 0) ?
-					parseInt(req.query.count) : 20;
-		loadTopicDetail(id, loaded_by, board, cursor, count, function (err, result) {
+		var cursor_type = req.query.cursor_type ? 
+					req.query.cursor_type : "NEXT";
+		loadTopicDetail(id, loaded_by, board, cursor, cursor_type, function (err, result) {
 			if (err || !result) {
 				res.json("Internal Service Error");
 			} else {
