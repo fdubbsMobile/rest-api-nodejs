@@ -112,12 +112,8 @@ function constructTopicMetaData(rawData) {
 }
 
 function getPreviousCursorOfTopics(cursor, count, total) {
-	if (cursor >= total) {
+	if (cursor == -1 || cursor + count > total) {
 		return -1;
-	}
-
-	if (cursor + count >= total) {
-		return total;
 	}
 	return cursor + count;
 }
@@ -149,7 +145,7 @@ function loadTopics (loaded_by, board, cursor, count, callback) {
 					return callback("Invalid cursor : " + cursor, null);
 				}
 
-				var topics = constructTopics(body.bbsdoc.po, cursor - currentCursor, count);		
+				var topics = constructTopics(body.bbsdoc.po, cursor == -1 ? 0 : cursor - currentCursor, count);		
 				var previousCursor = getPreviousCursorOfTopics(cursor == -1 ? currentCursor : cursor, 
 												topics.length, totalCount);
 				var nextCursor = getNextCursorOfTopics(cursor == -1 ? currentCursor : cursor, pageCount);

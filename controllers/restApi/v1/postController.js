@@ -74,12 +74,8 @@ function constructPostMetaData(rawData) {
 
 
 function getPreviousCursor(cursor, count, total) {
-	if (cursor >= total) {
+	if (cursor == -1 || cursor + count > total) {
 		return -1;
-	}
-
-	if (cursor + count >= total) {
-		return total;
 	}
 	return cursor + count;
 }
@@ -107,11 +103,11 @@ function loadPosts (loaded_by, board, cursor, count, callback) {
 				var pageCount = parseInt(body.bbsdoc.brd.$.page);
 				var currentCursor = parseInt(body.bbsdoc.brd.$.start);
 
-				if (cursor > totalCount) {
+				if (cursor > totalCount || cursor == 0 || cursor < -1) {
 					return callback("Invalid cursor : " + cursor, null);
 				}
 
-				var posts = constructPosts(body.bbsdoc.po, cursor - currentCursor, count);		
+				var posts = constructPosts(body.bbsdoc.po, cursor == -1 ? 0 : cursor - currentCursor, count);		
 				var previousCursor = getPreviousCursor(cursor == -1 ? currentCursor : cursor, 
 												posts.length, totalCount);
 				var nextCursor = getNextCursor(cursor == -1 ? currentCursor : cursor, pageCount);
@@ -135,10 +131,6 @@ function loadPosts (loaded_by, board, cursor, count, callback) {
 function loadPostDetail (id, loaded_by, board, callback) {
 
 }
-
-function loadReplies (id, loaded_by, board, cursor, count, callback) {
-
-} 
 
 
 exports.getPosts = function (req, res) {
@@ -174,37 +166,6 @@ exports.getPostDetail = function (req, res) {
 		var loaded_by = req.query.loaded_by ? 
 					req.query.loaded_by : "BNAME";
 		loadPostDetail(id, loaded_by, board, function (err, result) {
-			if (err || !result) {
-				res.json("Internal Service Error");
-			} else {
-				res.json(result);
-			}
-		});
-	} else {
-		var errMsg = "Ivalid Input!";
-		if (!id) {
-			errMsg += "Post Id Missing;";
-		}
-
-		if (!board) {
-			errMsg += "board Missing;";
-		}
-		res.json(errMsg);
-	}
-}
-
-exports.getReplies = function (req, res) {
-	//res.json({ message: '/post/:id/reply' });
-	var id = req.params.id;
-	var board = req.query.board;
-	if (id && board) {
-		var loaded_by = req.query.loaded_by ? 
-					req.query.loaded_by : "BID";
-		var cursor = req.query.cursor ?
-					req.query.cursor : -1;
-		var count = req.query.count ?
-					req.query.count : 20;
-		loadReplies(id, loaded_by, board, cursor, count, function (err, result) {
 			if (err || !result) {
 				res.json("Internal Service Error");
 			} else {
