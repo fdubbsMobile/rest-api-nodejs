@@ -3,6 +3,20 @@ var utils = require('../utils');
 
 var AccessToken = require('../mongodb/accesstokens.js').AccessToken;
 
+exports.findByNameAndUpdate = function () {
+
+};
+
+exports.findOneByName = function (userName, done) {
+  var query = {userName : userName};
+  AccessToken.findOne(query, function (err, accessToken) {
+    if (err) {
+      return done(err, null);
+    } else {
+      return done(null, accessToken);
+    }
+  });
+};
 
 exports.findByToken = function (token, done) {
   AccessToken.findOne({'token' : token}, function (err, accessToken) {
@@ -24,7 +38,7 @@ exports.findByTokenAndRemove = function (token, done) {
   });
 };
 
-exports.create = function (userName, clientId, scope, done) {
+exports.create = function (userName, clientId, scope, cookies, done) {
   var token = utils.uid(config.token.accessTokenLength);
   var expirationDate = config.token.accessTokenExpirationDate();
 

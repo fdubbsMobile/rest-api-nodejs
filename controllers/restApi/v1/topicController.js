@@ -279,7 +279,7 @@ function constructPost(postRaw) {
 
 function loadTopicDetail (id, loaded_by, board, cursor, cursor_type, callback) {
 	var url = constructTopicDetailUrl(id, loaded_by, board, cursor, cursor_type);
-	needle.get(url, {decode : true, parse : false}, function (error, response, body) {
+	needle.get(url, {decode : true, parse : false}, function (error, response) {
 		if (error) {
 			console.log("err "+ error);
 			return callback(error, null);

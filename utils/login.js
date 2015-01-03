@@ -1,25 +1,35 @@
-var needle = require('../lib/needle');
+//var needle = require('../lib/needle');
+var request = require('request');
+var User = require('../mongodb/users.js').User;
+var models = require('../models');
+var HttpClient = require('./http_client');
 
 function doUserLogin (name, password, done) {
-	debug("user " + name + " logining...");
-	var url = config.bbs.host + "/bbs/login";
+	console.log("user " + name + " logining...");
+
+	var url = 'http://bbs.fudan.edu.cn/bbs/login';
 	var data = {
 		id : name,
 		pw : password
 	};
-	var options = {
-		headers : {
-			'Content-Type' : 'application/x-www-form-urlencoded' 
+
+	HttpClient.getClient(name).doPost(url, data, {parse : false}, function (error, response, body) {
+		if (error) {
+			return done(error, false);
 		}
-	};
-	data.id = name;
-	data.pw = password;
-	needle.post(url, data, function (err, response) {
-		if (err) {
-			return done(err, false);
+
+		if (response.statusCode == 302) {
+			models.users.insertOrUpdate(name, password, function (err) {
+				if (err) {
+					console.log("save error");
+				} else {
+					console.log("save success");
+				}
+			});
+			return done(null, true);
 		} else {
 			console.log("response : " + JSON.stringify(response));
-			return done(null, true);
+			return done(null, false);
 		}
 	});
 };

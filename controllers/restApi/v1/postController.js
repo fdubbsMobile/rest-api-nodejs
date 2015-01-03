@@ -128,8 +128,61 @@ function loadPosts (loaded_by, board, cursor, count, callback) {
 	});
 }
 
-function loadPostDetail (id, loaded_by, board, callback) {
+function constructPostDetailUrl(id, loaded_by, board) {
+	var url = config.bbs.host + "/bbs/con?new=1&f=" + id;
 
+	if (loaded_by == "BNAME") {
+		url += "&board=";
+		url += board;
+	} else {
+		url += "&bid=";
+		url += board;
+	}
+	return url;
+}
+
+function loadPostDetail (id, loaded_by, board, callback) {
+	var url = constructPostDetailUrl(id, loaded_by, board);
+	needle.get(url, {decode : true, parse : false}, function (error, response) {
+		if (error) {
+			console.log("err "+ error);
+			return callback(error, null);
+		} else {
+			if (response.statusCode == 200) {
+				/*
+				var doc = new XmlDocument(response.body);
+				var isLastPage = doc.attr.last;
+				var pageCount = doc.attr.page;
+				var gid = doc.attr.gid;
+				var postsRaw = doc.childrenNamed("po");
+				var postCount = postsRaw.length;
+				var firstFid = _.first(postsRaw).attr.fid;
+				var lastFid = _.last(postsRaw).attr.fid;
+
+
+				var previousCursor = getPreviousCursorOfTopicDetail(gid, firstFid);
+				var nextCursor = getNextCursorOfTopicDetail(postCount, pageCount, lastFid, isLastPage);
+				var posts = [];
+				_.each(postsRaw, function(postRaw, index, list) {
+					var post = constructPost(postRaw);
+					posts.push(post);
+				});
+				var result = {
+					count : posts.length,
+					previous_cursor : previousCursor,
+					next_cursor : nextCursor,
+					post_list : posts
+				};
+				*/
+				
+				return callback(null, response.body);
+			} else {
+				console.log("response status "+ response.statusCode);
+				console.log("response body "+ response.body);
+				return callback(null, null);
+			}
+		}
+	});
 }
 
 
@@ -138,7 +191,7 @@ exports.getPosts = function (req, res) {
 	var board = req.query.board;
 	if (board) {
 		var loaded_by = req.query.loaded_by ? 
-					req.query.loaded_by : "BID";
+					req.query.loaded_by : "BNAME";
 		var cursor = req.query.cursor ?
 					parseInt(req.query.cursor) : -1;
 		var count = (req.query.count && parseInt(req.query.count) < 20 && parseInt(req.query.count) > 0) ?
