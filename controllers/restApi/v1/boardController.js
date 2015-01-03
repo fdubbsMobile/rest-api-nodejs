@@ -7,7 +7,6 @@ function needLogin (body) {
 	if (body.indexOf("a href='login'") != -1) {
 		return true;
 	}
-
 	return false;
 };
 
@@ -87,7 +86,7 @@ function constructFavoriteBoards(body) {
 	return boards;
 };
 
-function loadFavoriteBoards(url, callback) {
+function loadFavoriteBoards(url, doLogin, callback) {
 	HttpClient.getClient("hidennis").doGet(url, 
 		{parse : true, type : "json"}, function (error, response, body) {
 			if (error) {
@@ -96,13 +95,18 @@ function loadFavoriteBoards(url, callback) {
 			} else {
 				if (response.statusCode == 200) {
 					if (needLogin(response.body)) {
-						loginManager.login("hidennis", "870914", function (err, success) {
-							if (err || !success) {
-								return callback("err", null);
-							} else {
-								loadFavoriteBoards(url, callback);
-							}
-						});
+						console.log("need login : "+response.body);
+						if (!doLogin) {
+							return callback("err", null);
+						} else {
+							loginManager.login("hidennis", "870914", function (err, success) {
+								if (err || !success) {
+									return callback("err", null);
+								} else {
+									loadFavoriteBoards(url, false, callback);
+								}
+							});
+						}
 					} else {
 						var boards = constructFavoriteBoards(body);
 						var result = {
@@ -124,7 +128,7 @@ function loadFavoriteBoards(url, callback) {
 function loadBoards (type, callback) {
 	var url = constructBoardsUrl(type);
 	if (type == "FAVORITE") {
-		loadFavoriteBoards(url, callback);
+		loadFavoriteBoards(url, true, callback);
 	} else {
 		loadAllBoards(url, callback);
 	}
