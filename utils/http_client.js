@@ -1,10 +1,12 @@
 var request = require('request');
+var FileCookieStore = require('tough-cookie-filestore');
 var Map = require('./map');
 var iconv = require('iconv-lite');
 var xml2jsParser = require('xml2js').Parser;
 var XmlDocument = require('xmldoc').XmlDocument;
 
 var clientMap = new Map();
+var cookieStore = new FileCookieStore(__dirname + '/cookies.json');
 
 
 var parse_content_type = function(header) {
@@ -68,9 +70,13 @@ var requestCallback = function (options, callback) {
 	if (needParse) {
 		var type = options.type ? options.type : "json";
 		return function (error, response, body) {
-			decode(response, body, function (error, response, body) {
-				parse(type, response, body, callback);
-			});
+			if (error || !response) {
+				callback(error, response, body);
+			} else {
+				decode(response, body, function (error, response, body) {
+					parse(type, response, body, callback);
+				});
+			}
 		};
 	}
 	return function (error, response, body) {
@@ -80,17 +86,24 @@ var requestCallback = function (options, callback) {
 
 function HttpClient() {
 	console.log("creating client ... ");
-	this.jar = request.jar();
+	//var jar = request.jar(cookieStore);
+	this.reqClient = request.defaults();
 }
 
 HttpClient.prototype.doPost = function(url, data, options, callback) {
-	request.post({url : url, form : data, jar : this.jar}, 
-		requestCallback(options, callback));
+	var jar = request.jar(cookieStore);
+	var self = this;
+	var reqOpts = {url : url, form : data, jar:jar};
+	console.log("request options : " + JSON.stringify(reqOpts));
+	request.post(reqOpts, requestCallback(options, callback));
 };
 
 HttpClient.prototype.doGet = function(url, options, callback) {
-	request.get({url : url, jar : this.jar},
-		requestCallback(options, callback));
+	var jar = request.jar(cookieStore);
+	var reqOpts = {url : url, jar:jar};
+	var self = this;
+	console.log("request options : " + JSON.stringify(reqOpts));
+	request.get(reqOpts, requestCallback(options, callback));
 };
 
 HttpClient.getClient = function(userName) {
