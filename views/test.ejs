@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>test</title>
+	<script type="text/javascript" src="../javascripts/Map.js"></script>
+	<script type="text/javascript" src="../javascripts/test.js"></script>
+	<script type="text/javascript">
+	window.onload = function(){
+		var map = new Map();
+
+		var selectBtns = [];
+
+		var inputs = document.getElementsByTagName('input');
+		for (var i = 0; i < inputs.length; i++) {
+			var selectBtn = inputs[i];
+			if (selectBtn.className == 'select') {
+				selectBtns.push(selectBtn);
+			}
+		}
+
+		for (var i = 0; i < selectBtns.length; i++) {
+			var selectBtn = selectBtns[i];
+			var id = selectBtn.id;
+			//alert("node"+id);
+			var task = new Task();
+			map.put("node"+id, task);
+
+			if (task.isSelected()) {
+				//alert("选中");
+				selectBtn.value = "取消选中";
+			} else {
+				//alert("取消选中");
+				selectBtn.value = "选中";
+			}
+
+			selectBtn.onclick = function(){
+				var self = this;
+				if (self.value == "选中") {
+					//alert("被选中了");
+					var key = "node"+self.id;
+					var task = map.get(key);
+					task.select();
+					self.value = "取消选中";
+				} else {
+					//alert("被取消选中了");
+					var key = "node"+self.id;
+					var task = map.get(key);
+					task.unSelect();
+					self.value = "选中";
+				}
+			};
+		}
+
+		var startBtn = document.getElementById('startBtn');
+		startBtn.onclick = function(){
+			var self = this;
+			if (self.value == "开始") {
+				self.value = "停止";
+				var keys = map.keyArray();
+				//alert(JSON.stringify(keys));
+				for (var i = 0; i < keys.length; i++) {
+					var key = keys[i];
+					//alert(key);
+					//var node = document.getElementById(key);
+					var task = map.get(key);
+					task.doFetch(key, function (key, value) {
+						var node = document.getElementById(key);
+						node.innerHTML = value;
+					});
+				}
+				
+			} else {
+				self.value = "开始";
+				var keys = map.keyArray();
+				for (var i = 0; i < keys.length; i++) {
+					var key = keys[i];
+					var task = map.get(key);
+					task.stop();
+				}
+			}
+		};
+	}
+	</script>
+</head>
+
+<body>
+	<input id="startBtn" type="button" value="开始"/><br/><br/><br/>
+	<div><input class = "select" id="1" type="button" value="选中"/><br/><div class="node" id="node1">null</div></div><br/>
+	<div><input class = "select" id="2" type="button" value="选中"/><br/><div class="node" id="node2">null</div></div><br/>
+	<div><input class = "select" id="3" type="button" value="选中"/><div class="node" id="node3">null</div></div><br/>
+	<div><input class = "select" id="4" type="button" value="选中"/><div class="node" id="node4">null</div></div><br/>
+	<div><input class = "select" id="5" type="button" value="选中"/><div class="node" id="node5">null</div></div><br/>
+	<div><input class = "select" id="6" type="button" value="选中"/><div class="node" id="node6">null</div></div><br/>
+	<div><input class = "select" id="7" type="button" value="选中"/><div class="node" id="node7">null</div></div><br/>
+	<div><input class = "select" id="8" type="button" value="选中"/><div class="node" id="node8">null</div></div><br/>
+	<div><input class = "select" id="9" type="button" value="选中"/><div class="node" id="node9">null</div></div><br/>
+	<div><input class = "select" id="10" type="button" value="选中"/><div class="node" id="node10">null</div></div><br/>
+</body>
+</html>
