@@ -54,6 +54,7 @@ function loadAllBoards (url, callback) {
 					if (false) {
 
 					} else {
+						console.log(JSON.stringify(response));
 						var boards = constructAllBoards(body);
 						var result = {
 							count : boards.length,

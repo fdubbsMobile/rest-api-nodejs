@@ -1,13 +1,9 @@
-var request = require('request');
-var FileCookieStore = require('tough-cookie-filestore');
-var Map = require('./map');
 var iconv = require('iconv-lite');
 var xml2jsParser = require('xml2js').Parser;
 var XmlDocument = require('xmldoc').XmlDocument;
-
+var Browser = require('zombie');
+var Map = require('./map');
 var clientMap = new Map();
-var cookieStore = new FileCookieStore(__dirname + '/cookies.json');
-
 
 var parse_content_type = function(header) {
 	if (!header || header == '') return {};
@@ -36,7 +32,7 @@ var parse = function (type, response, body, callback) {
 	var mime = parse_content_type(headers['content-type']);
 	if (mime.type != "text/html" 
 		&& mime.type != "text/xml") {
-		return callback(null, response, body);
+		return callback(null, response);
 	}
 
 	if (type == "xml") {
@@ -51,7 +47,7 @@ var parse = function (type, response, body, callback) {
 		try {
 			parser.parseString(body, function (error, result) {
 				if (error || !result) {
-					return callback(null, response, body);
+					return callback(null, response, result);
 				} else {
 					return callback(null, response, result);
 				}
@@ -69,41 +65,38 @@ var requestCallback = function (options, callback) {
 	var needParse = options.parse;
 	if (needParse) {
 		var type = options.type ? options.type : "json";
-		return function (error, response, body) {
+		return function (error, response) {
 			if (error || !response) {
-				callback(error, response, body);
+				callback(error, response, response.body);
 			} else {
-				decode(response, body, function (error, response, body) {
+				decode(response, response.body, function (error, response, body) {
 					parse(type, response, body, callback);
 				});
 			}
 		};
 	}
-	return function (error, response, body) {
-		decode(response, body, callback);
+	return function (error, response) {
+		decode(response, response.body, callback);
 	};
 }
 
 function HttpClient() {
 	console.log("creating client ... ");
 	//var jar = request.jar(cookieStore);
-	this.reqClient = request.defaults();
-}
+	this.browser = Browser.create();
+	this.browser.runScripts = false;
+};
 
 HttpClient.prototype.doPost = function(url, data, options, callback) {
-	var jar = request.jar(cookieStore);
+	console.log("do post : " + url);
 	var self = this;
-	var reqOpts = {url : url, form : data, jar:jar};
-	console.log("request options : " + JSON.stringify(reqOpts));
-	request.post(reqOpts, requestCallback(options, callback));
+	self.browser.resources.post(url, { params: data }, requestCallback(options, callback));
 };
 
 HttpClient.prototype.doGet = function(url, options, callback) {
-	var jar = request.jar(cookieStore);
-	var reqOpts = {url : url, jar:jar};
+	console.log("do get : " + url);
 	var self = this;
-	console.log("request options : " + JSON.stringify(reqOpts));
-	request.get(reqOpts, requestCallback(options, callback));
+	self.browser.resources.get(url, requestCallback(options, callback));
 };
 
 HttpClient.getClient = function(userName) {

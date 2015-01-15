@@ -5,7 +5,7 @@ var authController = require('../controllers/oauth2server/authStrategys');
 
 router.route('/').get(
   function (req, res) {
-		res.render('test');
+		res.json({ message: 'You are reaching the REST API for fudan bbs!' });
 	});
 
 exports.router = router;

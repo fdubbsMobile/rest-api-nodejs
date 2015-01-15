@@ -18,7 +18,7 @@ function doUserLogin (name, password, done) {
 			return done(error, false);
 		}
 
-		if (response.statusCode == 302) {
+		if (response.statusCode == 200) {
 			models.users.insertOrUpdate(name, password, function (err) {
 				if (err) {
 					console.log("save error");
