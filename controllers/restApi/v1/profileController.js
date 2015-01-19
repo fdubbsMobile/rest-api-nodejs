@@ -18,7 +18,11 @@ function constructBasicUrl (id) {
 	return url;
 }
 
-function loadSelfProfile(id, doLogin, profile, callback) {
+function constructSelfProfile(rawData, user) {
+	return user;
+}
+
+function loadSelfProfile(id, doLogin, user, callback) {
 	var url = config.bbs.host + "/bbs/info";
 	HttpClient.getClient("hidennis").doGet(url, 
 		{parse : true, type : "json"}, function (error, response, body) {
@@ -36,27 +40,21 @@ function loadSelfProfile(id, doLogin, profile, callback) {
 								if (err || !success) {
 									return callback("err", null);
 								} else {
-									loadBasicProfile(id, false, callback);
+									loadSelfProfile(id, false, user, callback);
 								}
 							});
 						}
 					} else {
-						var user = constructBasicProfile(body);
-						if (isLoginedUser(id)) {
-							loadSelfProfile(id, true, user, callback);
-						} else {
-							return callback(null, user);
-						}
-						
+						var profile = constructSelfProfile(body, user);
+						return callback(null, profile);
 					}
 				} else {
 					console.log("response status "+ response.statusCode);
 					console.log("response body "+ response.body);
-					return callback(null, null);
+					return callback(null, user);
 				}
 			}
 	});
-	callback(null, profile);
 }
 
 function constructBasicProfile(body) {
