@@ -1,5 +1,4 @@
 var config = require('../../../config/');
-var XmlDocument = require('xmldoc').XmlDocument;
 var HttpClient = require('../../../utils/http_client');
 var loginManager = require('../../../utils/login');
 
