@@ -19,6 +19,25 @@ function constructBasicUrl (id) {
 }
 
 function constructSelfProfile(rawData, user) {
+	var info = rawData.bbsinfo.$;
+	console.log("info:" +  JSON.stringify(info));
+	
+	var birthDay = {
+		year : info.year,
+		month : info.month,
+		day : info.day
+	};
+
+	user.history.post_count = info.post;
+	user.history.login_count = info.login;
+	user.history.online_time = info.stay;
+	user.history.register_date = info.since;
+	user.history.last_login_ip = info.host;
+	user.history.last_login_time = info.last;
+	user.profile.gender = info.gender;
+	user.profile.birth_date = info.birthDay;
+	user.profile.nick = body.bbsinfo.nick;
+
 	return user;
 }
 
