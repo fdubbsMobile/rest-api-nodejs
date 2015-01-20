@@ -1,15 +1,7 @@
-var needle = require('../../../lib/needle');
 var config = require('../../../config/');
-var XmlDocument = require('xmldoc').XmlDocument;
-var _ = require('underscore');
+var HttpClient = require('../../../utils/http_client');
+var underscore = require('underscore');
 
-var debugging   = !!process.env.DEBUG,
-    debug       = debugging ? console.log : function() { /* noop */ };
-
-var options = {
-  decode : false,
-  parse : true
-}
 
 function constructTopic(rawData) {
 	var title = rawData._;
@@ -30,12 +22,12 @@ function constructTopic(rawData) {
 
 function loadHotTopics (callback) {
 	var url = config.bbs.host + "/bbs/top10";
-	needle.get(url, options, function (error, response, body) {
-		if (error) {
-			console.log("err "+ error);
-			callback(error, null);
-		} else {
-			if (response.statusCode == 200) {
+	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "json"}, 
+		function (error, response, body) {
+			if (error) {
+				console.log(error);
+				return callback("err", null);
+			} else {
 				var topics = [];
 				var topTopics = body.bbstop10.top;
 				for (var key in topTopics) {
@@ -48,13 +40,9 @@ function loadHotTopics (callback) {
 				};
 
 				callback(null, result);
-			} else {
-				console.log("response status "+ response.statusCode);
-				console.log("response body "+ response.body);
-				callback(null, null);
 			}
 		}
-	});
+	);
 }
 
 function constructTopicsUrl(loaded_by, board, cursor, count) {
@@ -130,13 +118,12 @@ function getNextCursorOfTopics(cursor, count) {
 
 function loadTopics (loaded_by, board, cursor, count, callback) {
 	var url = constructTopicsUrl(loaded_by, board, cursor, count);
-	needle.get(url, options, function (error, response, body) {
-		if (error) {
-			console.log("err "+ error);
-			return callback(error, null);
-		} else {
-			if (response.statusCode == 200) {
-				
+	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "json"}, 
+		function (error, response, body) {
+			if (error) {
+				console.log(error);
+				return callback("err", null);
+			} else {
 				var totalCount = parseInt(body.bbsdoc.brd.$.total);
 				var pageCount = parseInt(body.bbsdoc.brd.$.page);
 				var currentCursor = parseInt(body.bbsdoc.brd.$.start);
@@ -157,13 +144,9 @@ function loadTopics (loaded_by, board, cursor, count, callback) {
 				};
 				
 				return callback(null, result);
-			} else {
-				console.log("response status "+ response.statusCode);
-				console.log("response body "+ response.body);
-				return callback(null, null);
 			}
 		}
-	});
+	);
 }
 
 function constructTopicDetailUrl(id, loaded_by, board, cursor, cursor_type) {
@@ -207,7 +190,7 @@ function getNextCursorOfTopicDetail(postCount, pageCount, lastFid, isLastPage) {
 
 function parseContent(contentRaw) {
 	var content = "";
-	_.each(contentRaw.childrenNamed("p"), function(para, idx, paras) {
+	underscore.each(contentRaw.childrenNamed("p"), function(para, idx, paras) {
 		content +="<p>";
 		var child = para.firstChild;
 		if (child) {
@@ -250,7 +233,7 @@ function constructPost(postRaw) {
 	var body = "";
 	var qoute = "";
 	var sign = "";
-	_.each(postRaw.childrenNamed("pa"), function(pa, idx, list1) {
+	underscore.each(postRaw.childrenNamed("pa"), function(pa, idx, list1) {
 		var m = pa.attr.m;
 		if (m == "t") {
 			body += parseContent(pa);
@@ -279,27 +262,25 @@ function constructPost(postRaw) {
 
 function loadTopicDetail (id, loaded_by, board, cursor, cursor_type, callback) {
 	var url = constructTopicDetailUrl(id, loaded_by, board, cursor, cursor_type);
-	needle.get(url, {decode : true, parse : false}, function (error, response) {
-		if (error) {
-			console.log("err "+ error);
-			return callback(error, null);
-		} else {
-			if (response.statusCode == 200) {
-				
-				var doc = new XmlDocument(response.body);
-				var isLastPage = doc.attr.last;
-				var pageCount = doc.attr.page;
-				var gid = doc.attr.gid;
-				var postsRaw = doc.childrenNamed("po");
+	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "xml"}, 
+		function (error, response, body) {
+			if (error) {
+				console.log(error);
+				return callback("err", null);
+			} else {
+				var isLastPage = body.attr.last;
+				var pageCount = body.attr.page;
+				var gid = body.attr.gid;
+				var postsRaw = body.childrenNamed("po");
 				var postCount = postsRaw.length;
-				var firstFid = _.first(postsRaw).attr.fid;
-				var lastFid = _.last(postsRaw).attr.fid;
+				var firstFid = underscore.first(postsRaw).attr.fid;
+				var lastFid = underscore.last(postsRaw).attr.fid;
 
 
 				var previousCursor = getPreviousCursorOfTopicDetail(gid, firstFid);
 				var nextCursor = getNextCursorOfTopicDetail(postCount, pageCount, lastFid, isLastPage);
 				var posts = [];
-				_.each(postsRaw, function(postRaw, index, list) {
+				underscore.each(postsRaw, function(postRaw, index, list) {
 					var post = constructPost(postRaw);
 					posts.push(post);
 				});
@@ -311,13 +292,9 @@ function loadTopicDetail (id, loaded_by, board, cursor, cursor_type, callback) {
 				};
 				
 				return callback(null, result);
-			} else {
-				console.log("response status "+ response.statusCode);
-				console.log("response body "+ response.body);
-				return callback(null, null);
 			}
 		}
-	});
+	);
 }
 
 exports.getHotTopics = function (req, res) {

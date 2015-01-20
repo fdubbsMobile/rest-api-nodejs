@@ -1,13 +1,6 @@
 var config = require('../../../config/');
 var HttpClient = require('../../../utils/http_client');
-var loginManager = require('../../../utils/login');
 
-function needLogin (body) {
-	if (body.indexOf("a href='login'") != -1) {
-		return true;
-	}
-	return false;
-};
 
 function constructBoardsUrl(type) {
 	var url = config.bbs.host + "/bbs/";
@@ -43,31 +36,22 @@ function constructAllBoards(body) {
 };
 
 function loadAllBoards (url, callback) {
-	HttpClient.getClient("hidennis").doGet(url, 
-		{parse : true, type : "json"}, function (error, response, body) {
+	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "json"}, 
+		function (error, response, body) {
 			if (error) {
 				console.log(error);
 				return callback("err", null);
 			} else {
-				if (response.statusCode == 200) {
-					if (false) {
-
-					} else {
-						console.log(JSON.stringify(response));
-						var boards = constructAllBoards(body);
-						var result = {
-							count : boards.length,
-							board_list : boards
-						};
-						return callback(null, result);
-					}
-				} else {
-					console.log("response status "+ response.statusCode);
-					console.log("response body "+ response.body);
-					return callback(null, null);
-				}
+				console.log(JSON.stringify(response));
+				var boards = constructAllBoards(body);
+				var result = {
+					count : boards.length,
+					board_list : boards
+				};
+				return callback(null, result);
 			}
-		});
+		}
+		);
 };
 
 function constructFavoriteBoards(body) {
@@ -86,49 +70,29 @@ function constructFavoriteBoards(body) {
 	return boards;
 };
 
-function loadFavoriteBoards(url, doLogin, callback) {
-	HttpClient.getClient("hidennis").doGet(url, 
-		{parse : true, type : "json"}, function (error, response, body) {
+function loadFavoriteBoards(url, callback) {
+	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "json"}, 
+		function (error, response, body) {
 			if (error) {
 				console.log(error);
 				return callback("err", null);
 			} else {
-				if (response.statusCode == 200) {
-					if (needLogin(response.body)) {
-						console.log("need login : "+response.body);
-						if (!doLogin) {
-							return callback("err", null);
-						} else {
-							loginManager.login("hidennis", "870914", function (err, success) {
-								if (err || !success) {
-									return callback("err", null);
-								} else {
-									loadFavoriteBoards(url, false, callback);
-								}
-							});
-						}
-					} else {
-						var boards = constructFavoriteBoards(body);
-						var result = {
-							count : boards.length,
-							board_list : boards
-						};
-						return callback(null, result);
-					}
-				} else {
-					console.log("response status "+ response.statusCode);
-					console.log("response body "+ response.body);
-					return callback(null, null);
-				}
+				var boards = constructFavoriteBoards(body);
+				var result = {
+					count : boards.length,
+					board_list : boards
+				};
+				return callback(null, result);
 			}
-		});
+		}
+		);
 };
 
 
 function loadBoards (type, callback) {
 	var url = constructBoardsUrl(type);
 	if (type == "FAVORITE") {
-		loadFavoriteBoards(url, true, callback);
+		loadFavoriteBoards(url, callback);
 	} else {
 		loadAllBoards(url, callback);
 	}

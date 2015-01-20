@@ -1,10 +1,5 @@
-var needle = require('../../../lib/needle');
 var config = require('../../../config/');
-
-var options = {
-  decode : false,
-  parse : true
-}
+var HttpClient = require('../../../utils/http_client');
 
 function constructSection(rawData) {
 	var metaData = rawData.$;
@@ -45,12 +40,12 @@ function constructBoard(rawData) {
 
 function loadSections (callback) {
 	var url = config.bbs.host + "/bbs/sec";
-	needle.get(url, options, function (error, response, body) {
-		if (error) {
-			console.log("err "+ error);
-			callback(error, null);
-		} else {
-			if (response.statusCode == 200) {
+	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "json"}, 
+		function (error, response, body) {
+			if (error) {
+				console.log(error);
+				return callback("err", null);
+			} else {
 				var sections = [];
 				var allSections = body.bbssec.sec;
 				for (var key in allSections) {
@@ -63,23 +58,19 @@ function loadSections (callback) {
 				};
 
 				callback(null, result);
-			} else {
-				console.log("response status "+ response.statusCode);
-				console.log("response body "+ response.body);
-				callback(null, null);
 			}
 		}
-	});
+	);
 }
 
 function loadSectionDetail (id, callback) {
 	var url = config.bbs.host + "/bbs/boa?s="+id;
-	needle.get(url, options, function (error, response, body) {
-		if (error) {
-			console.log("err "+ error);
-			callback(error, null);
-		} else {
-			if (response.statusCode == 200) {
+	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "json"}, 
+		function (error, response, body) {
+			if (error) {
+				console.log(error);
+				return callback("err", null);
+			} else {
 				var boards = [];
 				var allBoards = body.bbsboa.brd;
 				for (var key in allBoards) {
@@ -93,13 +84,9 @@ function loadSectionDetail (id, callback) {
 				};
 
 				callback(null, result);
-			} else {
-				console.log("response status "+ response.statusCode);
-				console.log("response body "+ response.body);
-				callback(null, null);
 			}
 		}
-	});
+	);
 }
 
 exports.getSections = function (req, res) {

@@ -1,6 +1,5 @@
 var config = require('../../../config/');
 var HttpClient = require('../../../utils/http_client');
-var loginManager = require('../../../utils/login');
 
 function needLogin (body) {
 	if (body.indexOf("a href='login'") != -1) {
@@ -10,7 +9,7 @@ function needLogin (body) {
 };
 
 function isLoginedUser(id) {
-	return id == "hidennis";
+	return id == "usedfortest";
 }
 
 function constructBasicUrl (id) {
@@ -41,39 +40,19 @@ function constructSelfProfile(rawData, user) {
 	return user;
 }
 
-function loadSelfProfile(id, doLogin, user, callback) {
+function loadSelfProfile(id, user, callback) {
 	var url = config.bbs.host + "/bbs/info";
-	HttpClient.getClient("hidennis").doGet(url, 
-		{parse : true, type : "json"}, function (error, response, body) {
+	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "json"}, 
+		function (error, response, body) {
 			if (error) {
 				console.log(error);
 				return callback("err", null);
 			} else {
-				if (response.statusCode == 200) {
-					if (needLogin(response.body)) {
-						console.log("need login : "+response.body);
-						if (!doLogin) {
-							return callback("err", null);
-						} else {
-							loginManager.login("hidennis", "870914", function (err, success) {
-								if (err || !success) {
-									return callback("err", null);
-								} else {
-									loadSelfProfile(id, false, user, callback);
-								}
-							});
-						}
-					} else {
-						var profile = constructSelfProfile(body, user);
-						return callback(null, profile);
-					}
-				} else {
-					console.log("response status "+ response.statusCode);
-					console.log("response body "+ response.body);
-					return callback(null, user);
-				}
+				var profile = constructSelfProfile(body, user);
+				return callback(null, profile);
 			}
-	});
+		}
+	);
 }
 
 function constructBasicProfile(body) {
@@ -121,60 +100,23 @@ function constructBasicProfile(body) {
 	return user;
 }
 
-function loadBasicProfile (id, doLogin, callback) {
+function loadProfile (id, callback) {
 	var url = constructBasicUrl(id);
-	HttpClient.getClient("hidennis").doGet(url, 
-		{parse : true, type : "json"}, function (error, response, body) {
+	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "json"}, 
+		function (error, response, body) {
 			if (error) {
 				console.log(error);
 				return callback("err", null);
 			} else {
-				if (response.statusCode == 200) {
-					if (needLogin(response.body)) {
-						console.log("need login : "+response.body);
-						if (!doLogin) {
-							return callback("err", null);
-						} else {
-							loginManager.login("hidennis", "870914", function (err, success) {
-								if (err || !success) {
-									return callback("err", null);
-								} else {
-									loadBasicProfile(id, false, callback);
-								}
-							});
-						}
-					} else {
-						var user = constructBasicProfile(body);
-						if (isLoginedUser(id)) {
-							loadSelfProfile(id, true, user, callback);
-						} else {
-							return callback(null, user);
-						}
-					}
+				var user = constructBasicProfile(body);
+				if (isLoginedUser(id)) {
+					loadSelfProfile(id, user, callback);
 				} else {
-					console.log("response status "+ response.statusCode);
-					console.log("response body "+ response.body);
-					return callback(null, null);
+					return callback(null, user);
 				}
 			}
-		});	
-}
-/**
-*  get profile of the specified user
-*  @parameter id : user id whose profile being loaded
-*  @parameter type : profile type, one of the "FULL","BASIC", "INTRODUCTION", "SIGNATURE"
-*  @return profile of the specified user
-**/
-function loadProfile (id, type, callback) {
-	if (type == "FULL") {
-		loadFullProfile(id, callback);
-	} else if (type == "INTRODUCTION") {
-		loadIntroduction(id, callback);
-	} else if (type == "SIGNATURE") {
-		loadSignature(id, callback);
-	} else {
-		loadBasicProfile(id, true, callback);
-	}
+		}
+	);	
 }
 
 exports.getProfile = function (req, res) {
@@ -182,7 +124,7 @@ exports.getProfile = function (req, res) {
 	var id = req.params.id;
 	if (id) {
 		var type = req.query.type ?  req.query.type : "BASIC";
-		loadProfile(id, type, function (err, result) {
+		loadProfile(id, function (err, result) {
 			if (err || !result) {
 				res.json("Internal Service Error");
 			} else {

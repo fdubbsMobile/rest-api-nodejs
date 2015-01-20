@@ -36,13 +36,10 @@
     "passport-http-bearer": "^1.0.1",
     "passport-local": "^1.0.0",
     "passport-oauth2-client-password": "^0.1.2",
-    "request": "^2.51.0",
-    "tough-cookie-filestore": "0.0.1",
     "underscore": "~1.7.0",
     "xml2js": "~0.4.4",
     "xmldoc": "~0.1.4",
-    "zombie": "~2.5.1",
-    "sleep": "~1.2.0"
+    "zombie": "~2.5.1"
   },
   "scripts": {
     "start": "node server.js"

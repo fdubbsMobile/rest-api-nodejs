@@ -1,6 +1,5 @@
 var config = require('../config');
 var utils = require('../utils');
-var loginManager = require('../utils/login');
 
 var User = require('../mongodb/users.js').User;
 
@@ -25,6 +24,7 @@ var findByNameAndPassword = function (name, password, done) {
       return done(err, null);
   	}else if (!user) {
   		console.log("cannot find user, try login");
+      /*
   		loginManager.login(name, password, function (err, success, cookies) {
   			if (err || !success) {
   				return done(err, null);
@@ -42,6 +42,7 @@ var findByNameAndPassword = function (name, password, done) {
   				});
   			}
   		});
+*/
   	} else {
   		console.log("find user : " + JSON.stringify(user));
       return done(null, user);

@@ -1,9 +1,51 @@
+
+var models = require('../models');
 var iconv = require('iconv-lite');
 var xml2jsParser = require('xml2js').Parser;
 var XmlDocument = require('xmldoc').XmlDocument;
 var Browser = require('zombie');
 var Map = require('./map');
 var clientMap = new Map();
+
+var defaultUser = "usedfortest";
+var defaultPasswd = "test";
+
+function doUserLogin (callback) {
+	console.log("user " + defaultUser + " logining...");
+
+	var url = 'http://bbs.fudan.edu.cn/bbs/login';
+	var data = {
+		id : defaultUser,
+		pw : defaultPasswd
+	};
+
+	HttpClient.getClient(defaultUser).doPost(url, data, {parse : false}, function (error, response, body) {
+		if (error) {
+			return done(error, false);
+		}
+
+		if (response.statusCode == 200) {
+			models.users.insertOrUpdate(defaultUser, defaultPasswd, function (err) {
+				if (err) {
+					console.log("save error");
+				} else {
+					console.log("save success");
+				}
+			});
+			return callback(null, true);
+		} else {
+			console.log("response : " + JSON.stringify(response));
+			return callback(null, false);
+		}
+	});
+};
+
+var isLoginNeeded = function (body) {
+	if (body.indexOf("a href='login'") != -1) {
+		return true;
+	}
+	return false;
+};
 
 var parse_content_type = function(header) {
 	if (!header || header == '') return {};
@@ -97,6 +139,31 @@ HttpClient.prototype.doGet = function(url, options, callback) {
 	console.log("do get : " + url);
 	var self = this;
 	self.browser.resources.get(url, requestCallback(options, callback));
+};
+
+HttpClient.doGetAndLoginIfNeeded = function(url, options, callback) {
+	var client = HttpClient.getClient(defaultUser);
+	client.doGet(url, options, function (error, response, body) {
+		if (error || response.statusCode != 200) {
+			console.log(error);
+			console.log("response status "+ response.statusCode);
+			console.log("response body "+ response.body);
+			return callback(error, response, body);
+		} else {
+			if (isLoginNeeded(response.body)) {
+				console.log("need login : "+response.body);
+				doUserLogin(function (err, success) {
+					if (err || !success) {
+						return callback("Login Needed!", response, body);
+					} else {
+						client.doGet(url, options, callback);
+					}
+				});
+			} else {
+				return callback(null, response, body);
+			}
+		}
+	});
 };
 
 HttpClient.getClient = function(userName) {

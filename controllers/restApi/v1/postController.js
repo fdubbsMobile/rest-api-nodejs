@@ -1,14 +1,5 @@
-var needle = require('../../../lib/needle');
 var config = require('../../../config/');
-
-var debugging   = !!process.env.DEBUG,
-    debug       = debugging ? console.log : function() { /* noop */ };
-
-var options = {
-  decode : false,
-  parse : true
-}
-
+var HttpClient = require('../../../utils/http_client');
 
 function constructPostsUrl(loaded_by, board, cursor, count) {
 	var url = config.bbs.host + "/bbs/doc";
@@ -92,13 +83,12 @@ function getNextCursor(cursor, count) {
 
 function loadPosts (loaded_by, board, cursor, count, callback) {
 	var url = constructPostsUrl(loaded_by, board, cursor, count);
-	needle.get(url, options, function (error, response, body) {
-		if (error) {
-			console.log("err "+ error);
-			return callback(error, null);
-		} else {
-			if (response.statusCode == 200) {
-				
+	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "json"}, 
+		function (error, response, body) {
+			if (error) {
+				console.log(error);
+				return callback("err", null);
+			} else {
 				var totalCount = parseInt(body.bbsdoc.brd.$.total);
 				var pageCount = parseInt(body.bbsdoc.brd.$.page);
 				var currentCursor = parseInt(body.bbsdoc.brd.$.start);
@@ -119,13 +109,9 @@ function loadPosts (loaded_by, board, cursor, count, callback) {
 				};
 
 				return callback(null, result);
-			} else {
-				console.log("response status "+ response.statusCode);
-				console.log("response body "+ response.body);
-				return callback(null, null);
 			}
 		}
-	});
+	);
 }
 
 function constructPostDetailUrl(id, loaded_by, board) {
@@ -143,12 +129,12 @@ function constructPostDetailUrl(id, loaded_by, board) {
 
 function loadPostDetail (id, loaded_by, board, callback) {
 	var url = constructPostDetailUrl(id, loaded_by, board);
-	needle.get(url, {decode : true, parse : false}, function (error, response) {
-		if (error) {
-			console.log("err "+ error);
-			return callback(error, null);
-		} else {
-			if (response.statusCode == 200) {
+	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "xml"}, 
+		function (error, response, body) {
+			if (error) {
+				console.log(error);
+				return callback("err", null);
+			} else {
 				/*
 				var doc = new XmlDocument(response.body);
 				var isLastPage = doc.attr.last;
@@ -176,18 +162,13 @@ function loadPostDetail (id, loaded_by, board, callback) {
 				*/
 				
 				return callback(null, response.body);
-			} else {
-				console.log("response status "+ response.statusCode);
-				console.log("response body "+ response.body);
-				return callback(null, null);
 			}
 		}
-	});
+	);
 }
 
 
 exports.getPosts = function (req, res) {
-	//res.json({ message: '/posts/' });
 	var board = req.query.board;
 	if (board) {
 		var loaded_by = req.query.loaded_by ? 
