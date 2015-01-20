@@ -36,7 +36,7 @@ function constructSelfProfile(rawData, user) {
 	user.history.last_login_time = info.last;
 	user.profile.gender = info.gender;
 	user.profile.birth_date = info.birthDay;
-	user.profile.nick = body.bbsinfo.nick;
+	user.profile.nick = rawData.bbsinfo.nick;
 
 	return user;
 }
@@ -78,7 +78,7 @@ function loadSelfProfile(id, doLogin, user, callback) {
 
 function constructBasicProfile(body) {
 	var states = body.bbsqry.st;
-	var status = states[0].$;
+	var status = states && states[0] ? states[0].$ : null;
 	console.log("status :" + JSON.stringify(status));
 	var info = body.bbsqry.$;
 	console.log("info:" +  JSON.stringify(info));
@@ -88,15 +88,15 @@ function constructBasicProfile(body) {
 		nick : body.bbsqry.nick,
 		gender : info.gender,
 		horoscope : info.horo,
-		is_visible : status.vis == 1 ? true : false,
-		is_web : status.web == 1 ? true : false,
-		desc : status.desc,
+		is_visible : status && status.vis == 1 ? true : false,
+		is_web : status && status.web == 1 ? true : false,
+		desc : status ? status.desc : "",
 		signature : body.bbsqry.smd,
-		ident : body.bbsqry.ident
+		ident : body.bbsqry.ident.indexOf("光华网友") != -1 ? "光华网友" : "天外来客"
 	};
 
 	var history = {
-		idle_time : status.idle,
+		idle_time : status ? status.idle : 0,
 		post_count : info.post,
 		login_count : info.login,
 		last_login_time : info.lastlogin,
@@ -150,7 +150,6 @@ function loadBasicProfile (id, doLogin, callback) {
 						} else {
 							return callback(null, user);
 						}
-						
 					}
 				} else {
 					console.log("response status "+ response.statusCode);
