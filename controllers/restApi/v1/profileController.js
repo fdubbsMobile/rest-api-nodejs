@@ -40,6 +40,22 @@ function constructSelfProfile(rawData, user) {
 	return user;
 }
 
+function loadSignature(id, user, callback) {
+	var url = config.bbs.host + "/bbs/sig";
+	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "json"}, 
+		function (error, response, body) {
+			if (error) {
+				console.log(error);
+				return callback("err", null);
+			} else {
+				user.profile.signature = body.bbseufile.text;
+				return callback(null, user);
+			}
+		}
+	);
+}
+
+
 function loadSelfProfile(id, user, callback) {
 	var url = config.bbs.host + "/bbs/info";
 	HttpClient.doGetAndLoginIfNeeded(url, {parse : true, type : "json"}, 
@@ -49,7 +65,8 @@ function loadSelfProfile(id, user, callback) {
 				return callback("err", null);
 			} else {
 				var profile = constructSelfProfile(body, user);
-				return callback(null, profile);
+				//return callback(null, profile);
+				loadSignature(id, profile, callback);
 			}
 		}
 	);
@@ -70,7 +87,8 @@ function constructBasicProfile(body) {
 		is_visible : status && status.vis == 1 ? true : false,
 		is_web : status && status.web == 1 ? true : false,
 		desc : status ? status.desc : "",
-		signature : body.bbsqry.smd,
+		signature : "",
+		introdution : body.bbsqry.smd,
 		ident : body.bbsqry.ident.indexOf("光华网友") != -1 ? "光华网友" : "天外来客"
 	};
 
